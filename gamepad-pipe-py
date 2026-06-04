@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+"""Read Flydigi Direwolf gamepad, print paddle events to stdout.
+
+Output (one per line):
+    dit down / dit up / dah down / dah up
+
+Usage:
+    python3 gamepad_pipe.py | cargo run --release --bin pipe
+    python3 gamepad_pipe.py | ./target/release/pipe [WPM]
+"""
+
+import sys
+import select
+import evdev
+
+DEVICE_PATH = "/dev/input/by-id/usb-Flydigi_Flydigi_Direwolf_4_Flydigi_Direwolf_4-event-joystick"
+DIT_BTN = evdev.ecodes.BTN_SOUTH
+DAH_BTN = evdev.ecodes.BTN_TR
+
+dev = evdev.InputDevice(DEVICE_PATH)
+dev.grab()
+fd = dev.fileno()
+
+print(f"device: {dev.name}", file=sys.stderr)
+print(f"dit={evdev.ecodes.BTN[DIT_BTN]}  dah={evdev.ecodes.BTN[DAH_BTN]}", file=sys.stderr)
+print("ready", file=sys.stderr)
+
+try:
+    while True:
+        r, _, _ = select.select([fd], [], [], 0.1)
+        if r:
+            for event in dev.read():
+                if event.type == evdev.ecodes.EV_KEY:
+                    if event.code == DIT_BTN:
+                        print("dit down" if event.value == 1 else "dit up", flush=True)
+                    elif event.code == DAH_BTN:
+                        print("dah down" if event.value == 1 else "dah up", flush=True)
+except KeyboardInterrupt:
+    pass
+finally:
+    dev.ungrab()
+    dev.close()
