@@ -69,6 +69,8 @@ Pins and mappings:
 
 Corresponding byte will be sent to the serial @ 115200 baud. Read them using `interface/read-serial.py`.
 
+(There's also a *nix-specific C implementation of `read-serial`. From my experience there's no difference with regard to latency.)
+
 Combine things together:
 
 ```shell
