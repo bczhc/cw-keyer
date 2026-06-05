@@ -43,7 +43,14 @@ Some interesting things can be done with programs above and these Python scripts
 
 I literally grabbed a $1.5 ESP8266 and made it the keyer interface.
 
-So first, grab an ESP8266 and set things up like this:
+So first, grab an ESP8266, and program it:
+
+```shell
+arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 interface
+arduino-cli upload -p /dev/ttyUSB0 --fqbn esp8266:esp8266:nodemcuv2 interface
+```
+
+Then set things up like this:
 
 ![img](assets/1.jpg)
 
@@ -56,7 +63,7 @@ Pins and mappings:
 
 Corresponding byte will be sent to the serial @ 115200 baud. Read them using `interface/read-serial.py`.
 
-Wire things up:
+Combine things together:
 
 ```shell
 interface/read-serial.py | target/debug/keyer -m ultimatic -w25 | pee ./audio-out.py visualizer/target/debug/visualizer ./decoder-wtype.py
