@@ -31,6 +31,12 @@ The `visualizer` GUI subproject receives stdin events:
 
 and draws a representation of the dit/dah/tone lanes in realtime to demonstrate the timing.
 
+## Building
+
+```shell
+cargo build && cargo build --manifest-path=visualizer/Cargo.toml 
+```
+
 ## Usage
 
 Some interesting things can be done with programs above and these Python scripts altogether.
@@ -80,7 +86,7 @@ Note the `./decoder-wtype.py` is optional. It receives `dit`, `dah`, `char`, `wo
 Similar to above:
 
 ```shell
-./gamepad-pipe-py | target/debug/keyer -m ultimatic -w25 | pee ./audio-out.py visualizer/target/debug/visualizer ./decoder-wtype.py
+./gamepad-pipe.py | target/debug/keyer -m ultimatic -w25 | pee ./audio-out.py visualizer/target/debug/visualizer ./decoder-wtype.py
 ```
 
 Demonstration:
@@ -89,6 +95,6 @@ https://github.com/user-attachments/assets/ac062851-90dc-44a0-9037-f2af451fb485
 
 ## Notes
 
-I use this as a software-defined Morse keyer solution. Stuff is _mostly_ vibe coded with OpenCode:deepseek-v4-pro, as a disclaimer. And at least the README is written by me all by-hand :).
+I use this as a software-defined Morse keyer solution. Stuff is _mostly_ vibe coded with OpenCode:deepseek-v4-pro - fair warning. The README however, is written by me all by-hand :).
 
 The project is inspired by <https://www.youtube.com/watch?v=Hn4j2nfdKNE> and their <https://didahdit.com> website.
