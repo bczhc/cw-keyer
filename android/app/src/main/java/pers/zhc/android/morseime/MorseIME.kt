@@ -364,8 +364,8 @@ class MorseIME : InputMethodService() {
     }
 
     override fun onDestroy() {
+        super.onDestroy()
         _binding = null
         destroyKeyer()
-        super.onDestroy()
     }
 }
