@@ -1,57 +1,54 @@
 package pers.zhc.android.morseime
 
+import android.content.Intent
 import android.os.Bundle
-import android.view.HapticFeedbackConstants
-import android.view.MotionEvent
+import android.provider.Settings
+import android.view.Menu
+import android.view.inputmethod.InputMethodManager
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import pers.zhc.android.morseime.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
-    private var keyerPtr: Long = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        keyerPtr = KeyerJNI.createKeyer(20.0, KeyerMode.ULTIMATIC)
-        KeyerJNI.startKeyer(keyerPtr)
-
-        binding.ditBtn.setOnTouchListener { v, event ->
-            when (event.actionMasked) {
-                MotionEvent.ACTION_DOWN -> {
-                    v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_PRESS)
-                    KeyerJNI.setDit(keyerPtr, true)
-                }
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_RELEASE)
-                    KeyerJNI.setDit(keyerPtr, false)
-                }
-            }
-            true
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            insets
         }
 
-        binding.dahBtn.setOnTouchListener { v, event ->
-            when (event.actionMasked) {
-                MotionEvent.ACTION_DOWN -> {
-                    v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_PRESS)
-                    KeyerJNI.setDah(keyerPtr, true)
-                }
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_RELEASE)
-                    KeyerJNI.setDah(keyerPtr, false)
-                }
-            }
-            true
+        setSupportActionBar(binding.toolbar as Toolbar)
+
+        binding.enableImeBtn.setOnClickListener {
+            startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS))
+        }
+        binding.selectImeBtn.setOnClickListener {
+            val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.showInputMethodPicker()
         }
     }
 
-    override fun onDestroy() {
-        KeyerJNI.stopKeyer(keyerPtr)
-        KeyerJNI.destroyKeyer(keyerPtr)
-        super.onDestroy()
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_keyer -> {
+                startActivity(Intent(this, KeyerActivity::class.java))
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 }

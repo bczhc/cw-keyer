@@ -1,31 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal"
-    android:padding="8dp"
+    android:orientation="vertical"
     tools:context=".MainActivity">
 
-    <Button
-        android:id="@+id/dit_btn"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_marginEnd="4dp"
-        android:layout_weight="1"
-        android:text="DIH"
-        android:textSize="28sp"
-        android:hapticFeedbackEnabled="true" />
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize" />
 
-    <Button
-        android:id="@+id/dah_btn"
-        android:layout_width="0dp"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginStart="4dp"
-        android:layout_weight="1"
-        android:text="DAH"
-        android:textSize="28sp"
-        android:hapticFeedbackEnabled="true" />
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="32dp">
+
+        <Button
+            android:id="@+id/enable_ime_btn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:text="@string/enable_ime"
+            android:textSize="18sp" />
+
+        <Button
+            android:id="@+id/select_ime_btn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:padding="16dp"
+            android:text="@string/select_ime"
+            android:textSize="18sp" />
+
+        <EditText
+            android:id="@+id/test_input"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginTop="32dp"
+            android:gravity="start|top"
+            android:hint="@string/test_input_hint"
+            android:inputType="textMultiLine"
+            android:padding="12dp"
+            android:textSize="16sp" />
+    </LinearLayout>
 
 </LinearLayout>
