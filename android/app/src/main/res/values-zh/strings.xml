@@ -15,4 +15,5 @@
     <string name="apply">应用</string>
     <string name="sound">声音</string>
     <string name="vibration">振动</string>
+    <string name="show_composing">显示预编辑</string>
 </resources>

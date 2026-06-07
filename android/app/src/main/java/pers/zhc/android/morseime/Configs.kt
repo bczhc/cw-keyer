@@ -10,6 +10,7 @@ data class Configs(
     val autoSpace: Boolean? = true,
     val soundEnabled: Boolean? = true,
     val vibrationEnabled: Boolean? = false,
+    val showComposing: Boolean? = true,
 ) {
     fun resolved() = copy(
         wpm = wpm ?: 20.0,
@@ -18,6 +19,7 @@ data class Configs(
         autoSpace = autoSpace ?: true,
         soundEnabled = soundEnabled ?: true,
         vibrationEnabled = vibrationEnabled ?: false,
+        showComposing = showComposing ?: true,
     )
 
     fun save(dir: File) {

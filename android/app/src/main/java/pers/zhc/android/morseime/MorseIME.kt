@@ -21,6 +21,7 @@ class MorseIME : InputMethodService() {
     private var autoSpace = true
     private var soundEnabled = true
     private var vibrationEnabled = false
+    private var showComposing = true
     private var wpm: Double = 20.0
     private var mode: Int = KeyerMode.ULTIMATIC
     private var pitch: Double = 700.0
@@ -94,6 +95,7 @@ class MorseIME : InputMethodService() {
             autoSpace = it.autoSpace ?: true
             soundEnabled = it.soundEnabled ?: true
             vibrationEnabled = it.vibrationEnabled ?: false
+            showComposing = it.showComposing ?: true
         }
         createKeyer()
     }
@@ -106,12 +108,12 @@ class MorseIME : InputMethodService() {
                     KeyerEvent.DIT -> {
                         pattern.append(".")
                         val decoded = morseMap[pattern.toString()] ?: "\uFFFD"
-                        currentInputConnection?.setComposingText(decoded, 1)
+                        if (showComposing) currentInputConnection?.setComposingText(decoded, 1)
                     }
                     KeyerEvent.DAH -> {
                         pattern.append("-")
                         val decoded = morseMap[pattern.toString()] ?: "\uFFFD"
-                        currentInputConnection?.setComposingText(decoded, 1)
+                        if (showComposing) currentInputConnection?.setComposingText(decoded, 1)
                     }
                     KeyerEvent.CHAR_SPACE -> {
                         val ch = morseMap[pattern.toString()]
@@ -166,6 +168,7 @@ class MorseIME : InputMethodService() {
         val autoSpaceSwitch = root.findViewById<android.widget.Switch>(R.id.auto_space_switch)
         val soundSwitch = root.findViewById<android.widget.Switch>(R.id.sound_switch)
         val vibrationSwitch = root.findViewById<android.widget.Switch>(R.id.vibration_switch)
+        val composingSwitch = root.findViewById<android.widget.Switch>(R.id.composing_switch)
         val modeNames = arrayOf("Iambic A", "Iambic B", "Ultimatic", "Straight")
         val modeValues = arrayOf(KeyerMode.IAMBIC_A, KeyerMode.IAMBIC_B, KeyerMode.ULTIMATIC, KeyerMode.STRAIGHT)
         modeSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, modeNames).also {
@@ -265,6 +268,7 @@ class MorseIME : InputMethodService() {
             autoSpaceSwitch.isChecked = autoSpace
             soundSwitch.isChecked = soundEnabled
             vibrationSwitch.isChecked = vibrationEnabled
+            composingSwitch.isChecked = showComposing
         }
 
         root.findViewById<View>(R.id.settings_btn).setOnClickListener {
@@ -312,6 +316,11 @@ class MorseIME : InputMethodService() {
                 vibrationEnabled = newVibration
                 changed = true
             }
+            val newComposing = composingSwitch.isChecked
+            if (newComposing != showComposing) {
+                showComposing = newComposing
+                changed = true
+            }
             if (newAutoSpace != autoSpace) {
                 autoSpace = newAutoSpace
                 changed = true
@@ -323,6 +332,7 @@ class MorseIME : InputMethodService() {
                 autoSpace = autoSpace,
                 soundEnabled = soundEnabled,
                 vibrationEnabled = vibrationEnabled,
+                showComposing = showComposing,
             ).save(filesDir)
             keyboardArea.visibility = View.VISIBLE
             modeLabel.visibility = View.VISIBLE
