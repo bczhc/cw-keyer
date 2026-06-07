@@ -99,6 +99,12 @@ https://github.com/user-attachments/assets/ac062851-90dc-44a0-9037-f2af451fb485
 
 See the `android` directory.
 
+Demonstration:
+
+https://github.com/user-attachments/assets/2d7cf41b-c67e-4de2-a46a-82b4df91252b
+
+(Audio latency happens here because it's that the screen recorder sucks but not the app has the issue.)
+
 ## Notes
 
 I use this as a software-defined Morse keyer solution. Stuff is _mostly_ vibe coded with OpenCode:deepseek-v4-pro - fair warning. The README however, is written by me all by-hand :).
