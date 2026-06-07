@@ -11,24 +11,106 @@ import android.widget.TextView
 class MorseIME : InputMethodService() {
     private var keyerPtr: Long = 0
     private var statusText: TextView? = null
-    private var ditDown = false
-    private var dahDown = false
     private val mainHandler = Handler(Looper.getMainLooper())
+    private val pattern = StringBuilder()
+    private var lastChar = ""
 
-    private val eventLabels = mapOf(
-        KeyerEvent.KEY_ON to "KEY ON",
-        KeyerEvent.KEY_OFF to "KEY OFF",
-        KeyerEvent.DIT to "dit",
-        KeyerEvent.DAH to "dah",
-        KeyerEvent.CHAR_SPACE to "char",
-        KeyerEvent.WORD_SPACE to "word",
+    private val morseMap = mapOf(
+        ".-" to "a",
+        "-..." to "b",
+        "-.-." to "c",
+        "-.." to "d",
+        "." to "e",
+        "..-." to "f",
+        "--." to "g",
+        "...." to "h",
+        ".." to "i",
+        ".---" to "j",
+        "-.-" to "k",
+        ".-.." to "l",
+        "--" to "m",
+        "-." to "n",
+        "---" to "o",
+        ".--." to "p",
+        "--.-" to "q",
+        ".-." to "r",
+        "..." to "s",
+        "-" to "t",
+        "..-" to "u",
+        "...-" to "v",
+        ".--" to "w",
+        "-..-" to "x",
+        "-.--" to "y",
+        "--.." to "z",
+        ".----" to "1",
+        "..---" to "2",
+        "...--" to "3",
+        "....-" to "4",
+        "....." to "5",
+        "-...." to "6",
+        "--..." to "7",
+        "---.." to "8",
+        "----." to "9",
+        "-----" to "0",
+        ".-.-.-" to ".",
+        "--..--" to ",",
+        "..--.." to "?",
+        ".----." to "'",
+        "-.-.--" to "!",
+        "-..-." to "/",
+        "-.--." to "(",
+        "-.--.-" to ")",
+        ".-..." to "&",
+        "---..." to ":",
+        "-.-.-." to ";",
+        "-...-" to "=",
+        ".-.-." to "+",
+        "-....-" to "-",
+        "..--.-" to "_",
+        ".-..-." to "\"",
+        "...-..-" to "$",
+        ".--.-." to "@",
+        "..--" to " ",
+        "-...-" to "\n",
     )
 
     override fun onCreate() {
         super.onCreate()
         keyerPtr = KeyerJNI.createKeyer(20.0, KeyerMode.ULTIMATIC)
         KeyerJNI.setEventCallback(keyerPtr) { event ->
-            mainHandler.post { statusText?.text = eventLabels[event] ?: "" }
+            mainHandler.post {
+                when (event) {
+                    KeyerEvent.DIT -> {
+                        pattern.append(".")
+                        val decoded = morseMap[pattern.toString()] ?: "\uFFFD"
+                        currentInputConnection?.setComposingText(decoded, 1)
+                    }
+                    KeyerEvent.DAH -> {
+                        pattern.append("-")
+                        val decoded = morseMap[pattern.toString()] ?: "\uFFFD"
+                        currentInputConnection?.setComposingText(decoded, 1)
+                    }
+                    KeyerEvent.CHAR_SPACE -> {
+                        val ch = morseMap[pattern.toString()]
+                        if (ch != null) {
+                            currentInputConnection?.commitText(ch, 1)
+                            lastChar = ch
+                        } else {
+                            currentInputConnection?.finishComposingText()
+                        }
+                        pattern.clear()
+                    }
+                    KeyerEvent.WORD_SPACE -> {
+                        if (lastChar != "\n") {
+                            currentInputConnection?.commitText(" ", 1)
+                        } else {
+                            currentInputConnection?.finishComposingText()
+                        }
+                        pattern.clear()
+                    }
+                }
+                statusText?.text = pattern.toString()
+            }
         }
     }
 
