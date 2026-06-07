@@ -25,7 +25,7 @@ class MorseIME : InputMethodService() {
     private var vibrationEnabled = false
     private var showComposing = true
     private var wpm: Double = 20.0
-    private var mode: Int = KeyerMode.ULTIMATIC
+    private var mode: Int = KeyerMode.IAMBIC_B
     private var pitch: Double = 700.0
     private var started = false
 
@@ -102,7 +102,7 @@ class MorseIME : InputMethodService() {
         super.onCreate()
         Configs.load(filesDir).let {
             wpm = it.wpm ?: 20.0
-            mode = it.mode ?: KeyerMode.ULTIMATIC
+            mode = it.mode ?: KeyerMode.IAMBIC_B
             pitch = it.pitch ?: 700.0
             autoSpace = it.autoSpace ?: true
             soundEnabled = it.soundEnabled ?: true

@@ -5,7 +5,7 @@ import java.io.File
 
 data class Configs(
     val wpm: Double? = 20.0,
-    val mode: Int? = KeyerMode.ULTIMATIC,
+    val mode: Int? = KeyerMode.IAMBIC_B,
     val pitch: Double? = 700.0,
     val autoSpace: Boolean? = true,
     val soundEnabled: Boolean? = true,
@@ -14,7 +14,7 @@ data class Configs(
 ) {
     fun resolved() = copy(
         wpm = wpm ?: 20.0,
-        mode = mode ?: KeyerMode.ULTIMATIC,
+        mode = mode ?: KeyerMode.IAMBIC_B,
         pitch = pitch ?: 700.0,
         autoSpace = autoSpace ?: true,
         soundEnabled = soundEnabled ?: true,
