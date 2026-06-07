@@ -1,16 +1,15 @@
 package pers.zhc.android.morseime
 
 import android.os.Bundle
+import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import pers.zhc.android.morseime.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
-    private var audioPtr: Long = 0
+    private var keyerPtr: Long = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -18,25 +17,32 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
+        keyerPtr = KeyerJNI.createKeyer(20.0, KeyerMode.ULTIMATIC)
+        KeyerJNI.startKeyer(keyerPtr)
 
-        audioPtr = KeyerJNI.initAudio()
-
-        binding.toneBtn.setOnTouchListener { v, event ->
+        binding.ditBtn.setOnTouchListener { v, event ->
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
-                    binding.toneBtn.text = "松开"
-                    v.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_PRESS)
-                    KeyerJNI.startTone(audioPtr)
+                    v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_PRESS)
+                    KeyerJNI.setDit(keyerPtr, true)
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    binding.toneBtn.text = "按下发报"
-                    v.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_RELEASE)
-                    KeyerJNI.stopTone(audioPtr)
+                    v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_RELEASE)
+                    KeyerJNI.setDit(keyerPtr, false)
+                }
+            }
+            true
+        }
+
+        binding.dahBtn.setOnTouchListener { v, event ->
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_PRESS)
+                    KeyerJNI.setDah(keyerPtr, true)
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_RELEASE)
+                    KeyerJNI.setDah(keyerPtr, false)
                 }
             }
             true
@@ -44,7 +50,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        KeyerJNI.destroyAudio(audioPtr)
+        KeyerJNI.stopKeyer(keyerPtr)
+        KeyerJNI.destroyKeyer(keyerPtr)
         super.onDestroy()
     }
 }

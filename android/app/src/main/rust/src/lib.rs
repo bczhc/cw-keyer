@@ -1,10 +1,19 @@
 pub mod audio;
 
-use jni::objects::{JClass, JIntArray};
+use jni::objects::JClass;
 use jni::sys::{jboolean, jdouble, jint, jlong};
 use jni::JNIEnv;
-use keyer_lib::{Keyer, KeyerMode};
-use log::debug;
+use keyer_lib::{KeyEvent, Keyer, KeyerMode};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex, OnceLock};
+use std::thread;
+use std::time::{Duration, Instant};
+
+fn mono_now() -> f64 {
+    static START: OnceLock<Instant> = OnceLock::new();
+    let start = START.get_or_init(Instant::now);
+    start.elapsed().as_secs_f64()
+}
 
 fn set_up_logger() {
     use android_logger::Config;
@@ -17,10 +26,6 @@ fn set_up_logger() {
     );
 }
 
-struct KeyerState {
-    keyer: Keyer,
-}
-
 fn mode_from_int(mode: i32) -> KeyerMode {
     match mode {
         0 => KeyerMode::IambicA,
@@ -31,14 +36,23 @@ fn mode_from_int(mode: i32) -> KeyerMode {
     }
 }
 
-fn event_to_int(event: keyer_lib::KeyEvent) -> i32 {
-    match event {
-        keyer_lib::KeyEvent::KeyOn => 0,
-        keyer_lib::KeyEvent::KeyOff => 1,
-        keyer_lib::KeyEvent::Dit => 2,
-        keyer_lib::KeyEvent::Dah => 3,
-        keyer_lib::KeyEvent::CharSpace => 4,
-        keyer_lib::KeyEvent::WordSpace => 5,
+struct KeyerState {
+    keyer: Keyer,
+    audio: audio::AudioPlayer,
+}
+
+struct KeyerHandle {
+    state: Arc<Mutex<KeyerState>>,
+    running: Arc<AtomicBool>,
+    handle: Option<thread::JoinHandle<()>>,
+}
+
+impl Drop for KeyerHandle {
+    fn drop(&mut self) {
+        self.running.store(false, Ordering::Relaxed);
+        if let Some(handle) = self.handle.take() {
+            handle.join().ok();
+        }
     }
 }
 
@@ -61,7 +75,69 @@ pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_createKeyer(
     mode: jint,
 ) -> jlong {
     let keyer = Keyer::new(wpm as f64, mode_from_int(mode));
-    Box::into_raw(Box::new(KeyerState { keyer })) as jlong
+    let state = KeyerState {
+        keyer,
+        audio: audio::AudioPlayer::new(),
+    };
+    let handle = KeyerHandle {
+        state: Arc::new(Mutex::new(state)),
+        running: Arc::new(AtomicBool::new(false)),
+        handle: None,
+    };
+    Box::into_raw(Box::new(handle)) as jlong
+}
+
+#[allow(non_snake_case)]
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_startKeyer(
+    _env: JNIEnv,
+    _class: JClass,
+    ptr: jlong,
+) {
+    let handle = unsafe { &mut *(ptr as *mut KeyerHandle) };
+    if handle.handle.is_some() {
+        return;
+    }
+    let state = handle.state.clone();
+    let running = handle.running.clone();
+    running.store(true, Ordering::Relaxed);
+    handle.handle = Some(thread::spawn(move || {
+        while running.load(Ordering::Relaxed) {
+            let now = mono_now();
+            let events = {
+                let mut guard = state.lock().unwrap();
+                guard.keyer.tick(now)
+            };
+            for event in &events {
+                match event {
+                    KeyEvent::KeyOn => {
+                        let guard = state.lock().unwrap();
+                        guard.audio.start_tone();
+                    }
+                    KeyEvent::KeyOff => {
+                        let guard = state.lock().unwrap();
+                        guard.audio.stop_tone();
+                    }
+                    _ => {}
+                }
+            }
+            thread::sleep(Duration::from_millis(1));
+        }
+    }));
+}
+
+#[allow(non_snake_case)]
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_stopKeyer(
+    _env: JNIEnv,
+    _class: JClass,
+    ptr: jlong,
+) {
+    let handle = unsafe { &mut *(ptr as *mut KeyerHandle) };
+    handle.running.store(false, Ordering::Relaxed);
+    if let Some(h) = handle.handle.take() {
+        h.join().ok();
+    }
 }
 
 #[allow(non_snake_case)]
@@ -73,7 +149,7 @@ pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_destroyKeyer(
 ) {
     if ptr != 0 {
         unsafe {
-            drop(Box::from_raw(ptr as *mut KeyerState));
+            drop(Box::from_raw(ptr as *mut KeyerHandle));
         }
     }
 }
@@ -85,10 +161,10 @@ pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_setDit(
     _class: JClass,
     ptr: jlong,
     pressed: jboolean,
-    now: jdouble,
 ) -> jboolean {
-    let state = unsafe { &mut *(ptr as *mut KeyerState) };
-    state.keyer.set_dit(pressed != 0, now as f64) as jboolean
+    let handle = unsafe { &*(ptr as *const KeyerHandle) };
+    let mut guard = handle.state.lock().unwrap();
+    guard.keyer.set_dit(pressed != 0, mono_now()) as jboolean
 }
 
 #[allow(non_snake_case)]
@@ -98,94 +174,20 @@ pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_setDah(
     _class: JClass,
     ptr: jlong,
     pressed: jboolean,
-    now: jdouble,
 ) -> jboolean {
-    let state = unsafe { &mut *(ptr as *mut KeyerState) };
-    state.keyer.set_dah(pressed != 0, now as f64) as jboolean
+    let handle = unsafe { &*(ptr as *const KeyerHandle) };
+    let mut guard = handle.state.lock().unwrap();
+    guard.keyer.set_dah(pressed != 0, mono_now()) as jboolean
 }
 
 #[allow(non_snake_case)]
 #[unsafe(no_mangle)]
-pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_isKeyDown(
+pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_isKeyOn(
     _env: JNIEnv,
     _class: JClass,
     ptr: jlong,
 ) -> jboolean {
-    let state = unsafe { &mut *(ptr as *mut KeyerState) };
-    state.keyer.is_key_down() as jboolean
-}
-
-#[allow(non_snake_case)]
-#[unsafe(no_mangle)]
-pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_tick<'local>(
-    env: JNIEnv<'local>,
-    _class: JClass<'local>,
-    ptr: jlong,
-    now: jdouble,
-) -> JIntArray<'local> {
-    let state = unsafe { &mut *(ptr as *mut KeyerState) };
-    let events = state.keyer.tick(now as f64);
-    let len = events.len();
-    let result = env
-        .new_int_array(len as i32)
-        .expect("Failed to create int array");
-    if len <= 8 {
-        let mut buf = [0i32; 8];
-        for (i, &event) in events.iter().enumerate() {
-            buf[i] = event_to_int(event);
-        }
-        env.set_int_array_region(&result, 0, &buf[..len])
-            .expect("Failed to set int array region");
-    } else {
-        let buf: Vec<jint> = events.iter().map(|&e| event_to_int(e) as _).collect();
-        env.set_int_array_region(&result, 0, &buf)
-            .expect("Failed to set int array region");
-    }
-    result
-}
-
-#[allow(non_snake_case)]
-#[unsafe(no_mangle)]
-pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_initAudio(
-    _env: JNIEnv,
-    _class: JClass,
-) -> jlong {
-    let player = audio::AudioPlayer::new();
-    Box::into_raw(Box::new(player)) as jlong
-}
-
-#[allow(non_snake_case)]
-#[unsafe(no_mangle)]
-pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_startTone(
-    _env: JNIEnv,
-    _class: JClass,
-    ptr: jlong,
-) {
-    let player = unsafe { &*(ptr as *const audio::AudioPlayer) };
-    player.start_tone();
-}
-
-#[allow(non_snake_case)]
-#[unsafe(no_mangle)]
-pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_stopTone(
-    _env: JNIEnv,
-    _class: JClass,
-    ptr: jlong,
-) {
-    let player = unsafe { &*(ptr as *const audio::AudioPlayer) };
-    player.stop_tone();
-}
-
-#[allow(non_snake_case)]
-#[unsafe(no_mangle)]
-pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_destroyAudio(
-    _env: JNIEnv,
-    _class: JClass,
-    ptr: jlong,
-) {
-    if ptr != 0 {
-        unsafe {
-            drop(Box::from_raw(ptr as *mut audio::AudioPlayer));
-        }
-    }
+    let handle = unsafe { &*(ptr as *const KeyerHandle) };
+    let guard = handle.state.lock().unwrap();
+    guard.keyer.is_key_on() as jboolean
 }

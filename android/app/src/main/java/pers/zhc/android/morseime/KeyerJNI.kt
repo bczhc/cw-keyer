@@ -26,13 +26,9 @@ object KeyerJNI {
 
     external fun createKeyer(wpm: Double, mode: Int): Long
     external fun destroyKeyer(ptr: Long)
-    external fun setDit(ptr: Long, pressed: Boolean, now: Double): Boolean
-    external fun setDah(ptr: Long, pressed: Boolean, now: Double): Boolean
-    external fun isKeyDown(ptr: Long): Boolean
-    external fun tick(ptr: Long, now: Double): IntArray
-
-    external fun initAudio(): Long
-    external fun startTone(ptr: Long)
-    external fun stopTone(ptr: Long)
-    external fun destroyAudio(ptr: Long)
+    external fun startKeyer(ptr: Long)
+    external fun stopKeyer(ptr: Long)
+    external fun setDit(ptr: Long, pressed: Boolean): Boolean
+    external fun setDah(ptr: Long, pressed: Boolean): Boolean
+    external fun isKeyOn(ptr: Long): Boolean
 }
