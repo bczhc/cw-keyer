@@ -138,6 +138,7 @@ class MorseIME : InputMethodService() {
                         if (ch != null) {
                             if (ch == BACKSPACE) {
                                 currentInputConnection?.commitText("", 1)
+                                lastChar = ""
                             } else {
                                 currentInputConnection?.commitText(ch, 1)
                                 lastChar = ch
@@ -148,7 +149,7 @@ class MorseIME : InputMethodService() {
                         pattern.clear()
                     }
                     KeyerEvent.WORD_SPACE -> {
-                        if (autoSpace && lastChar != "\n") {
+                        if (autoSpace && lastChar !in listOf("\n", "", " ")) {
                             currentInputConnection?.commitText(" ", 1)
                         } else {
                             currentInputConnection?.finishComposingText()
