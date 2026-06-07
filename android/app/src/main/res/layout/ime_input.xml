@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:minHeight="260dp"
@@ -46,11 +47,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:layout_marginEnd="4dp"
-            android:backgroundTint="@color/ime_button_bg"
-            android:textColor="@color/ime_button_text"
-            android:text="@string/dit"
-            android:textSize="28sp"
-            android:textStyle="bold" />
+            android:background="@drawable/dit_btn_bg" />
 
         <Button
             android:id="@+id/dah_btn"
@@ -58,11 +55,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:layout_marginStart="4dp"
-            android:backgroundTint="@color/ime_button_bg"
-            android:textColor="@color/ime_button_text"
-            android:text="@string/dah"
-            android:textSize="28sp"
-            android:textStyle="bold" />
+            android:background="@drawable/dah_btn_bg" />
 
         <Button
             android:id="@+id/key_btn"
