@@ -1,3 +1,10 @@
+import org.tomlj.Toml
+import pers.zhc.gradle.plugins.ndk.ConfigParser
+import pers.zhc.gradle.plugins.ndk.GradleExtensionConfigConverters
+import pers.zhc.gradle.plugins.ndk.rust.RustBuildPlugin
+import pers.zhc.gradle.plugins.ndk.rust.RustBuildPlugin.RustBuildPluginExtension
+import java.util.*
+
 plugins {
     alias(libs.plugins.android.application)
 }
@@ -23,10 +30,50 @@ android {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
+
+        val types = asMap
+        types["debug"]!!.apply {
+            isMinifyEnabled = false
+            isShrinkResources = false
+            proguardFiles("proguard-rules-debug.pro")
+            isDebuggable = true
+            isJniDebuggable = true
+            signingConfig = signingConfigs["debug"]
+        }
+        types["release"]!!.apply {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles("proguard-rules.pro")
+            isDebuggable = true
+            isJniDebuggable = true
+            signingConfig = signingConfigs["debug"]
+        }
+
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+    sourceSets {
+        val sets = asMap
+        sets["main"]!!.apply {
+            jniLibs.srcDirs("jniLibs")
+        }
+    }
+
+    signingConfigs {
+        val configs = asMap
+        configs["debug"]!!.apply {
+            storeFile = file("release.keystore")
+            storePassword = "123456"
+            keyAlias = "alias"
+            keyPassword = "123456"
+        }
+    }
+
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
     }
 }
 
@@ -36,4 +83,76 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+}
+
+apply<RustBuildPlugin>()
+
+val appProject = project
+val localConfig = getAndroidLocalConfig()
+
+val configTomlFile = File(rootDir, "config.toml")
+
+if (!configTomlFile.exists()) {
+    throw GradleException("File required: $configTomlFile")
+}
+
+val parsed = ConfigParser.parse(configTomlFile)
+
+val configToml = Toml.parse(configTomlFile.reader())!!
+
+configToml.errors().forEach {
+    throw GradleException("`config.toml` parsing error: $it")
+}
+
+configure<RustBuildPluginExtension> {
+    srcDir.set("$projectDir/src/main/rust")
+    ndkDir.set(localConfig.ndkDir)
+    targets.set(GradleExtensionConfigConverters.targetsToMap(parsed.ndk.targets))
+    buildType.set(parsed.ndk.buildType.name)
+    outputDir.set(File(appProject.projectDir, "jniLibs").also { it.mkdirs() }.path)
+    extraEnv.set(
+        mapOf(
+            Pair(
+                "CC_aarch64-linux-android",
+                File(localConfig.ndkDir, "toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang").path
+            )
+        )
+    )
+}
+
+
+val compileRustTask = project.tasks.getByName("compileRust")
+val compileJniTask = tasks.register("compileJni") {
+    dependsOn(compileRustTask)
+}
+appProject.tasks.getByName("preBuild").dependsOn(compileJniTask)
+
+// ================== Utility functions ==================
+data class AndroidLocalConfig(
+    val sdkDir: String,
+    val ndkDir: String,
+)
+
+fun getAndroidLocalConfig(): AndroidLocalConfig {
+    val props = Properties()
+    val localPropertiesFile = File(rootDir, "local.properties")
+
+    if (!localPropertiesFile.exists()) {
+        throw GradleException("Missing 'local.properties' file in project root.")
+    }
+
+    localPropertiesFile.inputStream().use { props.load(it) }
+
+    fun getRequiredProperty(key: String): String {
+        val value = props.getProperty(key)
+        if (value.isNullOrBlank()) {
+            throw GradleException("Property '$key' is missing in local.properties. Please provide it.")
+        }
+        return value
+    }
+
+    return AndroidLocalConfig(
+        sdkDir = getRequiredProperty("sdk.dir"),
+        ndkDir = getRequiredProperty("ndk.dir"),
+    )
 }
