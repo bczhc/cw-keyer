@@ -87,6 +87,14 @@ class MorseIME : InputMethodService() {
 
     override fun onCreate() {
         super.onCreate()
+        Configs.load(filesDir).let {
+            wpm = it.wpm ?: 20.0
+            mode = it.mode ?: KeyerMode.ULTIMATIC
+            pitch = it.pitch ?: 700.0
+            autoSpace = it.autoSpace ?: true
+            soundEnabled = it.soundEnabled ?: true
+            vibrationEnabled = it.vibrationEnabled ?: false
+        }
         createKeyer()
     }
 
@@ -127,6 +135,7 @@ class MorseIME : InputMethodService() {
                 statusText?.text = pattern.toString()
             }
         }
+        KeyerJNI.setSoundEnabled(keyerPtr, soundEnabled)
         if (started) {
             KeyerJNI.startKeyer(keyerPtr)
         }
@@ -294,6 +303,14 @@ class MorseIME : InputMethodService() {
                 autoSpace = newAutoSpace
                 changed = true
             }
+            Configs(
+                wpm = wpm,
+                mode = mode,
+                pitch = pitch,
+                autoSpace = autoSpace,
+                soundEnabled = soundEnabled,
+                vibrationEnabled = vibrationEnabled,
+            ).save(filesDir)
             keyboardArea.visibility = View.VISIBLE
             modeLabel.visibility = View.VISIBLE
             settingsArea.visibility = View.GONE
