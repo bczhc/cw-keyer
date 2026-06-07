@@ -93,6 +93,7 @@ class MainActivity : AppCompatActivity() {
         sb.append(getString(R.string.label_newline) + "  -...-" + "\n")
 
         sb.append("\n" + getString(R.string.null_char_desc))
+        sb.append("\n" + getString(R.string.help_delete_hint))
 
         AlertDialog.Builder(this)
             .setTitle(getString(R.string.help_title))

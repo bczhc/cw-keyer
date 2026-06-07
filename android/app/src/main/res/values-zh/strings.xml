@@ -22,4 +22,5 @@
     <string name="label_newline">换行</string>
     <string name="label_null_char">空字符</string>
     <string name="null_char_desc">空字符：7-12 个点</string>
+    <string name="help_delete_hint">需要删除时，选择需要删除的文本，发8个点（&lt;HH&gt;）</string>
 </resources>

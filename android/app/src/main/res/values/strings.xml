@@ -22,4 +22,5 @@
     <string name="label_newline">Newline</string>
     <string name="label_null_char">Null char</string>
     <string name="null_char_desc">Null char: 7-12 dots</string>
+    <string name="help_delete_hint">To delete, select text and send 8 dots (&lt;HH&gt;)</string>
 </resources>
