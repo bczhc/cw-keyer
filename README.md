@@ -95,6 +95,10 @@ Demonstration:
 
 https://github.com/user-attachments/assets/ac062851-90dc-44a0-9037-f2af451fb485
 
+### Android
+
+See the `android` directory.
+
 ## Notes
 
 I use this as a software-defined Morse keyer solution. Stuff is _mostly_ vibe coded with OpenCode:deepseek-v4-pro - fair warning. The README however, is written by me all by-hand :).
