@@ -8,8 +8,8 @@ object KeyerMode {
 }
 
 object KeyerEvent {
-    const val KEY_DOWN = 0
-    const val KEY_UP = 1
+    const val KEY_ON = 0
+    const val KEY_OFF = 1
     const val DIT = 2
     const val DAH = 3
     const val CHAR_SPACE = 4

@@ -144,8 +144,8 @@ fn main() -> io::Result<()> {
 
         for event in events {
             let msg = match event {
-                KeyEvent::KeyDown => "key on",
-                KeyEvent::KeyUp => "key off",
+                KeyEvent::KeyOn => "key on",
+                KeyEvent::KeyOff => "key off",
                 KeyEvent::Dit => "dit",
                 KeyEvent::Dah => "dah",
                 KeyEvent::CharSpace => "char",

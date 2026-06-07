@@ -7,8 +7,8 @@ use std::collections::VecDeque;
 /// Events emitted by the keyer.  Callers drain these from [`Keyer::tick`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum KeyEvent {
-    KeyDown,
-    KeyUp,
+    KeyOn,
+    KeyOff,
     Dit,
     Dah,
     CharSpace,
@@ -54,7 +54,7 @@ pub struct Keyer {
     last_queued: Option<Element>,
     squeezed_last_element: bool,
     queue: VecDeque<Element>,
-    key_down: bool,
+    key_on: bool,
     play_state: PlayState,
     inter_element: f64,
     dit_len: f64,
@@ -76,7 +76,7 @@ impl Keyer {
             last_queued: None,
             squeezed_last_element: false,
             queue: VecDeque::new(),
-            key_down: false,
+            key_on: false,
             play_state: PlayState::Idle,
             inter_element: unit,
             dit_len: unit,
@@ -88,8 +88,8 @@ impl Keyer {
         }
     }
 
-    pub fn is_key_down(&self) -> bool {
-        self.key_down
+    pub fn is_key_on(&self) -> bool {
+        self.key_on
     }
 
     pub fn set_dit(&mut self, pressed: bool, now: f64) -> bool {
@@ -131,11 +131,11 @@ impl Keyer {
             self.char_deadline = None;
             self.word_deadline = None;
             self.straight_hold_start = now;
-            self.key_down = true;
-            self.events.push(KeyEvent::KeyDown);
+            self.key_on = true;
+            self.events.push(KeyEvent::KeyOn);
         } else if !is_any && was_any {
-            self.key_down = false;
-            self.events.push(KeyEvent::KeyUp);
+            self.key_on = false;
+            self.events.push(KeyEvent::KeyOff);
 
             let elapsed = now - self.straight_hold_start;
             let threshold = self.dah_len * 2.0 / 3.0;
@@ -174,7 +174,7 @@ impl Keyer {
             return std::mem::take(&mut self.events);
         }
 
-        let prev = self.key_down;
+        let prev = self.key_on;
 
         match self.play_state {
             PlayState::Idle => {
@@ -182,7 +182,7 @@ impl Keyer {
             }
             PlayState::PlayingElement { start, duration } => {
                 if now - start >= duration {
-                    self.key_down = false;
+                    self.key_on = false;
                     self.play_state = PlayState::InGap { start: now };
                 }
             }
@@ -193,11 +193,11 @@ impl Keyer {
             }
         }
 
-        if self.key_down != prev {
-            self.events.push(if self.key_down {
-                KeyEvent::KeyDown
+        if self.key_on != prev {
+            self.events.push(if self.key_on {
+                KeyEvent::KeyOn
             } else {
-                KeyEvent::KeyUp
+                KeyEvent::KeyOff
             });
         }
 
@@ -272,7 +272,7 @@ impl Keyer {
             Element::Dit => self.dit_len,
             Element::Dah => self.dah_len,
         };
-        self.key_down = true;
+        self.key_on = true;
         self.play_state = PlayState::PlayingElement {
             start: now,
             duration,

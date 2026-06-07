@@ -33,8 +33,8 @@ fn mode_from_int(mode: i32) -> KeyerMode {
 
 fn event_to_int(event: keyer_lib::KeyEvent) -> i32 {
     match event {
-        keyer_lib::KeyEvent::KeyDown => 0,
-        keyer_lib::KeyEvent::KeyUp => 1,
+        keyer_lib::KeyEvent::KeyOn => 0,
+        keyer_lib::KeyEvent::KeyOff => 1,
         keyer_lib::KeyEvent::Dit => 2,
         keyer_lib::KeyEvent::Dah => 3,
         keyer_lib::KeyEvent::CharSpace => 4,
