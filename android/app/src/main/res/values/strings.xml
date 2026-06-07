@@ -15,4 +15,6 @@
     <string name="switch_ime">Switch IME</string>
     <string name="cancel">Cancel</string>
     <string name="apply">Apply</string>
+    <string name="sound">Sound</string>
+    <string name="vibration">Vibration</string>
 </resources>

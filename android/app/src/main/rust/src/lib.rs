@@ -46,6 +46,7 @@ struct KeyerHandle {
     running: Arc<AtomicBool>,
     handle: Option<thread::JoinHandle<()>>,
     callback: Option<GlobalRef>,
+    sound_enabled: Arc<AtomicBool>,
 }
 
 impl Drop for KeyerHandle {
@@ -86,6 +87,7 @@ pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_createKeyer(
         running: Arc::new(AtomicBool::new(false)),
         handle: None,
         callback: None,
+        sound_enabled: Arc::new(AtomicBool::new(true)),
     };
     Box::into_raw(Box::new(handle)) as jlong
 }
@@ -104,6 +106,18 @@ pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_setEventCallback(
 
 #[allow(non_snake_case)]
 #[unsafe(no_mangle)]
+pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_setSoundEnabled(
+    _env: JNIEnv,
+    _class: JClass,
+    ptr: jlong,
+    enabled: jboolean,
+) {
+    let handle = unsafe { &mut *(ptr as *mut KeyerHandle) };
+    handle.sound_enabled.store(enabled != 0, Ordering::Relaxed);
+}
+
+#[allow(non_snake_case)]
+#[unsafe(no_mangle)]
 pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_startKeyer(
     mut env: JNIEnv,
     _class: JClass,
@@ -116,6 +130,7 @@ pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_startKeyer(
     let state = handle.state.clone();
     let running = handle.running.clone();
     let callback = handle.callback.as_ref().map(|cb| cb.clone());
+    let sound_enabled = handle.sound_enabled.clone();
     let jvm = env.get_java_vm().unwrap();
     running.store(true, Ordering::Relaxed);
     handle.handle = Some(thread::spawn(move || {
@@ -127,16 +142,18 @@ pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_startKeyer(
                 guard.keyer.tick(now)
             };
             for event in &events {
-                match event {
-                    KeyEvent::KeyOn => {
-                        let guard = state.lock().unwrap();
-                        guard.audio.start_tone();
+                if sound_enabled.load(Ordering::Relaxed) {
+                    match event {
+                        KeyEvent::KeyOn => {
+                            let guard = state.lock().unwrap();
+                            guard.audio.start_tone();
+                        }
+                        KeyEvent::KeyOff => {
+                            let guard = state.lock().unwrap();
+                            guard.audio.stop_tone();
+                        }
+                        _ => {}
                     }
-                    KeyEvent::KeyOff => {
-                        let guard = state.lock().unwrap();
-                        guard.audio.stop_tone();
-                    }
-                    _ => {}
                 }
                 if let Some(ref cb) = callback {
                     let event_int: i32 = match event {

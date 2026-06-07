@@ -36,4 +36,5 @@ object KeyerJNI {
     external fun setDah(ptr: Long, pressed: Boolean): Boolean
     external fun isKeyOn(ptr: Long): Boolean
     external fun setEventCallback(ptr: Long, callback: KeyerEventCallback)
+    external fun setSoundEnabled(ptr: Long, enabled: Boolean)
 }

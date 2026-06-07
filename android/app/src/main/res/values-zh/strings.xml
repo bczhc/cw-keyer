@@ -15,4 +15,6 @@
     <string name="switch_ime">切换输入法</string>
     <string name="cancel">取消</string>
     <string name="apply">应用</string>
+    <string name="sound">声音</string>
+    <string name="vibration">振动</string>
 </resources>

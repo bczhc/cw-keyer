@@ -19,6 +19,8 @@ class MorseIME : InputMethodService() {
     private val pattern = StringBuilder()
     private var lastChar = ""
     private var autoSpace = true
+    private var soundEnabled = true
+    private var vibrationEnabled = false
     private var wpm: Double = 20.0
     private var mode: Int = KeyerMode.ULTIMATIC
     private var pitch: Double = 700.0
@@ -162,6 +164,8 @@ class MorseIME : InputMethodService() {
         val pitchValue = root.findViewById<TextView>(R.id.pitch_value)
         val modeSpinner = root.findViewById<Spinner>(R.id.mode_spinner)
         val autoSpaceSwitch = root.findViewById<android.widget.Switch>(R.id.auto_space_switch)
+        val soundSwitch = root.findViewById<android.widget.Switch>(R.id.sound_switch)
+        val vibrationSwitch = root.findViewById<android.widget.Switch>(R.id.vibration_switch)
         val modeNames = arrayOf("Iambic A", "Iambic B", "Ultimatic", "Straight")
         val modeValues = arrayOf(KeyerMode.IAMBIC_A, KeyerMode.IAMBIC_B, KeyerMode.ULTIMATIC, KeyerMode.STRAIGHT)
         modeSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, modeNames).also {
@@ -206,23 +210,32 @@ class MorseIME : InputMethodService() {
         }
         updateKeyboardMode()
 
-        ditBtn.setOnTouchListener { _, event ->
+        ditBtn.setOnTouchListener { v, event ->
             when (event.action) {
-                MotionEvent.ACTION_DOWN -> KeyerJNI.setDit(keyerPtr, true)
+                MotionEvent.ACTION_DOWN -> {
+                    if (vibrationEnabled) v.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
+                    KeyerJNI.setDit(keyerPtr, true)
+                }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> KeyerJNI.setDit(keyerPtr, false)
             }
             true
         }
-        dahBtn.setOnTouchListener { _, event ->
+        dahBtn.setOnTouchListener { v, event ->
             when (event.action) {
-                MotionEvent.ACTION_DOWN -> KeyerJNI.setDah(keyerPtr, true)
+                MotionEvent.ACTION_DOWN -> {
+                    if (vibrationEnabled) v.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
+                    KeyerJNI.setDah(keyerPtr, true)
+                }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> KeyerJNI.setDah(keyerPtr, false)
             }
             true
         }
-        keyBtn.setOnTouchListener { _, event ->
+        keyBtn.setOnTouchListener { v, event ->
             when (event.action) {
-                MotionEvent.ACTION_DOWN -> KeyerJNI.setDit(keyerPtr, true)
+                MotionEvent.ACTION_DOWN -> {
+                    if (vibrationEnabled) v.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
+                    KeyerJNI.setDit(keyerPtr, true)
+                }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> KeyerJNI.setDit(keyerPtr, false)
             }
             true
@@ -233,6 +246,8 @@ class MorseIME : InputMethodService() {
             pitchValue.text = pitch.toInt().toString()
             modeSpinner.setSelection(modeValues.indexOf(mode))
             autoSpaceSwitch.isChecked = autoSpace
+            soundSwitch.isChecked = soundEnabled
+            vibrationSwitch.isChecked = vibrationEnabled
         }
 
         root.findViewById<View>(R.id.settings_cancel_btn).setOnClickListener {
@@ -257,6 +272,17 @@ class MorseIME : InputMethodService() {
                 pitch = newPitch
                 destroyAndRecreateKeyer()
                 updateKeyboardMode()
+                changed = true
+            }
+            val newSound = soundSwitch.isChecked
+            val newVibration = vibrationSwitch.isChecked
+            if (newSound != soundEnabled) {
+                soundEnabled = newSound
+                KeyerJNI.setSoundEnabled(keyerPtr, soundEnabled)
+                changed = true
+            }
+            if (newVibration != vibrationEnabled) {
+                vibrationEnabled = newVibration
                 changed = true
             }
             if (newAutoSpace != autoSpace) {
