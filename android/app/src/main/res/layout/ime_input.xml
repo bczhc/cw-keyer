@@ -22,6 +22,18 @@
             android:gravity="center"
             android:layout_gravity="center" />
 
+        <TextView
+            android:id="@+id/settings_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/settings_title"
+            android:textSize="18sp"
+            android:textColor="@color/ime_candidate_text"
+            android:gravity="start"
+            android:layout_gravity="start"
+            android:paddingStart="16dp"
+            android:visibility="gone" />
+
         <Button
             android:id="@+id/settings_btn"
             android:layout_width="40dp"

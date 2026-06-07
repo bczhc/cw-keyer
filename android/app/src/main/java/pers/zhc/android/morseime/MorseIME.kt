@@ -7,14 +7,14 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.LinearLayout
-import android.widget.Spinner
 import android.widget.TextView
+import pers.zhc.android.morseime.databinding.ImeInputBinding
 
 class MorseIME : InputMethodService() {
     private var keyerPtr: Long = 0
     private var statusText: TextView? = null
+    private var _binding: ImeInputBinding? = null
+    private val binding get() = _binding!!
     private val mainHandler = Handler(Looper.getMainLooper())
     private val pattern = StringBuilder()
     private var lastChar = ""
@@ -175,65 +175,51 @@ class MorseIME : InputMethodService() {
     }
 
     override fun onCreateInputView(): View {
-        val root = layoutInflater.inflate(R.layout.ime_input, null) as View
+        _binding = ImeInputBinding.inflate(layoutInflater)
+        val root = binding.root
+        statusText = binding.statusText
 
-        val keyboardArea = root.findViewById<View>(R.id.keyboard_area)
-        val settingsArea = root.findViewById<View>(R.id.settings_area)
-        statusText = root.findViewById(R.id.status_text)
-        val modeLabel = root.findViewById<TextView>(R.id.mode_label)
-
-        val speedValue = root.findViewById<TextView>(R.id.speed_value)
-        val pitchValue = root.findViewById<TextView>(R.id.pitch_value)
-        val modeSpinner = root.findViewById<Spinner>(R.id.mode_spinner)
-        val autoSpaceSwitch = root.findViewById<android.widget.Switch>(R.id.auto_space_switch)
-        val soundSwitch = root.findViewById<android.widget.Switch>(R.id.sound_switch)
-        val vibrationSwitch = root.findViewById<android.widget.Switch>(R.id.vibration_switch)
-        val composingSwitch = root.findViewById<android.widget.Switch>(R.id.composing_switch)
         val modeNames = arrayOf("Iambic A", "Iambic B", "Ultimatic", "Straight")
         val modeValues = arrayOf(KeyerMode.IAMBIC_A, KeyerMode.IAMBIC_B, KeyerMode.ULTIMATIC, KeyerMode.STRAIGHT)
-        modeSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, modeNames).also {
+        binding.modeSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, modeNames).also {
             it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         }
 
         var pendingMode = mode
-        modeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+        binding.modeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(p: AdapterView<*>?, v: View?, pos: Int, id: Long) {
                 pendingMode = modeValues[pos]
             }
             override fun onNothingSelected(p: AdapterView<*>?) {}
         }
 
-        root.findViewById<View>(R.id.speed_inc_btn).setOnClickListener {
-            val cur = speedValue.text.toString().toIntOrNull() ?: return@setOnClickListener
-            speedValue.text = (cur + 1).coerceAtMost(99).toString()
+        binding.speedIncBtn.setOnClickListener {
+            val cur = binding.speedValue.text.toString().toIntOrNull() ?: return@setOnClickListener
+            binding.speedValue.text = (cur + 1).coerceAtMost(99).toString()
         }
-        root.findViewById<View>(R.id.speed_dec_btn).setOnClickListener {
-            val cur = speedValue.text.toString().toIntOrNull() ?: return@setOnClickListener
-            speedValue.text = (cur - 1).coerceAtLeast(1).toString()
-        }
-
-        root.findViewById<View>(R.id.pitch_inc_btn).setOnClickListener {
-            val cur = pitchValue.text.toString().toIntOrNull() ?: return@setOnClickListener
-            pitchValue.text = (cur + 50).coerceAtMost(2000).toString()
-        }
-        root.findViewById<View>(R.id.pitch_dec_btn).setOnClickListener {
-            val cur = pitchValue.text.toString().toIntOrNull() ?: return@setOnClickListener
-            pitchValue.text = (cur - 50).coerceAtLeast(100).toString()
+        binding.speedDecBtn.setOnClickListener {
+            val cur = binding.speedValue.text.toString().toIntOrNull() ?: return@setOnClickListener
+            binding.speedValue.text = (cur - 1).coerceAtLeast(1).toString()
         }
 
-        val ditBtn = root.findViewById<Button>(R.id.dit_btn)
-        val dahBtn = root.findViewById<Button>(R.id.dah_btn)
-        val keyBtn = root.findViewById<Button>(R.id.key_btn)
+        binding.pitchIncBtn.setOnClickListener {
+            val cur = binding.pitchValue.text.toString().toIntOrNull() ?: return@setOnClickListener
+            binding.pitchValue.text = (cur + 50).coerceAtMost(2000).toString()
+        }
+        binding.pitchDecBtn.setOnClickListener {
+            val cur = binding.pitchValue.text.toString().toIntOrNull() ?: return@setOnClickListener
+            binding.pitchValue.text = (cur - 50).coerceAtLeast(100).toString()
+        }
 
         fun updateKeyboardMode() {
             val isStraight = mode == KeyerMode.STRAIGHT
-            ditBtn.visibility = if (isStraight) View.GONE else View.VISIBLE
-            dahBtn.visibility = if (isStraight) View.GONE else View.VISIBLE
-            keyBtn.visibility = if (isStraight) View.VISIBLE else View.GONE
+            binding.ditBtn.visibility = if (isStraight) View.GONE else View.VISIBLE
+            binding.dahBtn.visibility = if (isStraight) View.GONE else View.VISIBLE
+            binding.keyBtn.visibility = if (isStraight) View.VISIBLE else View.GONE
         }
         updateKeyboardMode()
 
-        ditBtn.setOnTouchListener { v, event ->
+        binding.ditBtn.setOnTouchListener { v, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     v.isPressed = true
@@ -247,7 +233,7 @@ class MorseIME : InputMethodService() {
             }
             true
         }
-        dahBtn.setOnTouchListener { v, event ->
+        binding.dahBtn.setOnTouchListener { v, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     v.isPressed = true
@@ -261,7 +247,7 @@ class MorseIME : InputMethodService() {
             }
             true
         }
-        keyBtn.setOnTouchListener { v, event ->
+        binding.keyBtn.setOnTouchListener { v, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     v.isPressed = true
@@ -276,46 +262,44 @@ class MorseIME : InputMethodService() {
             true
         }
 
-        root.findViewById<View>(R.id.switch_ime_btn).setOnClickListener {
+        binding.switchImeBtn.setOnClickListener {
             (getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager)
                 .showInputMethodPicker()
         }
 
         fun resetSettingsUI() {
-            speedValue.text = wpm.toInt().toString()
-            pitchValue.text = pitch.toInt().toString()
-            modeSpinner.setSelection(modeValues.indexOf(mode))
-            autoSpaceSwitch.isChecked = autoSpace
-            soundSwitch.isChecked = soundEnabled
-            vibrationSwitch.isChecked = vibrationEnabled
-            composingSwitch.isChecked = showComposing
+            binding.speedValue.text = wpm.toInt().toString()
+            binding.pitchValue.text = pitch.toInt().toString()
+            binding.modeSpinner.setSelection(modeValues.indexOf(mode))
+            binding.autoSpaceSwitch.isChecked = autoSpace
+            binding.soundSwitch.isChecked = soundEnabled
+            binding.vibrationSwitch.isChecked = vibrationEnabled
+            binding.composingSwitch.isChecked = showComposing
         }
 
-        root.findViewById<View>(R.id.settings_btn).setOnClickListener {
-            keyboardArea.visibility = View.GONE
-            modeLabel.visibility = View.GONE
-            settingsArea.visibility = View.VISIBLE
-            statusText?.text = getString(R.string.settings_title)
-            statusText?.gravity = android.view.Gravity.START
-            statusText?.setPaddingRelative((16 * resources.displayMetrics.density).toInt(), 0, 0, 0)
+        binding.settingsBtn.setOnClickListener {
+            binding.keyboardArea.visibility = View.GONE
+            binding.modeLabel.visibility = View.GONE
+            binding.settingsArea.visibility = View.VISIBLE
+            binding.statusText.visibility = View.GONE
+            binding.settingsTitle.visibility = View.VISIBLE
             resetSettingsUI()
         }
 
-        root.findViewById<View>(R.id.settings_cancel_btn).setOnClickListener {
+        binding.settingsCancelBtn.setOnClickListener {
             resetSettingsUI()
-            keyboardArea.visibility = View.VISIBLE
-            modeLabel.visibility = View.VISIBLE
-            settingsArea.visibility = View.GONE
-            statusText?.text = pattern.toString()
-            statusText?.gravity = android.view.Gravity.CENTER
-            statusText?.setPaddingRelative(0, 0, 0, 0)
+            binding.keyboardArea.visibility = View.VISIBLE
+            binding.modeLabel.visibility = View.VISIBLE
+            binding.settingsArea.visibility = View.GONE
+            binding.statusText.visibility = View.VISIBLE
+            binding.settingsTitle.visibility = View.GONE
         }
 
-        root.findViewById<View>(R.id.settings_apply_btn).setOnClickListener {
-            val newWpm = speedValue.text.toString().toDoubleOrNull() ?: return@setOnClickListener
-            val newPitch = pitchValue.text.toString().toDoubleOrNull() ?: return@setOnClickListener
+        binding.settingsApplyBtn.setOnClickListener {
+            val newWpm = binding.speedValue.text.toString().toDoubleOrNull() ?: return@setOnClickListener
+            val newPitch = binding.pitchValue.text.toString().toDoubleOrNull() ?: return@setOnClickListener
             val newMode = pendingMode
-            val newAutoSpace = autoSpaceSwitch.isChecked
+            val newAutoSpace = binding.autoSpaceSwitch.isChecked
             var changed = false
             if (newWpm != wpm || newMode != mode || newPitch != pitch) {
                 wpm = newWpm
@@ -325,8 +309,8 @@ class MorseIME : InputMethodService() {
                 updateKeyboardMode()
                 changed = true
             }
-            val newSound = soundSwitch.isChecked
-            val newVibration = vibrationSwitch.isChecked
+            val newSound = binding.soundSwitch.isChecked
+            val newVibration = binding.vibrationSwitch.isChecked
             if (newSound != soundEnabled) {
                 soundEnabled = newSound
                 KeyerJNI.setSoundEnabled(keyerPtr, soundEnabled)
@@ -336,7 +320,7 @@ class MorseIME : InputMethodService() {
                 vibrationEnabled = newVibration
                 changed = true
             }
-            val newComposing = composingSwitch.isChecked
+            val newComposing = binding.composingSwitch.isChecked
             if (newComposing != showComposing) {
                 showComposing = newComposing
                 changed = true
@@ -354,12 +338,11 @@ class MorseIME : InputMethodService() {
                 vibrationEnabled = vibrationEnabled,
                 showComposing = showComposing,
             ).save(filesDir)
-            keyboardArea.visibility = View.VISIBLE
-            modeLabel.visibility = View.VISIBLE
-            settingsArea.visibility = View.GONE
-            statusText?.text = pattern.toString()
-            statusText?.gravity = android.view.Gravity.CENTER
-            statusText?.setPaddingRelative(0, 0, 0, 0)
+            binding.keyboardArea.visibility = View.VISIBLE
+            binding.modeLabel.visibility = View.VISIBLE
+            binding.settingsArea.visibility = View.GONE
+            binding.statusText.visibility = View.VISIBLE
+            binding.settingsTitle.visibility = View.GONE
         }
 
         return root
@@ -378,6 +361,7 @@ class MorseIME : InputMethodService() {
     }
 
     override fun onDestroy() {
+        _binding = null
         destroyKeyer()
         super.onDestroy()
     }
