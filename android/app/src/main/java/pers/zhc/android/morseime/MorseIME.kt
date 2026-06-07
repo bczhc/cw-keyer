@@ -17,6 +17,7 @@ class MorseIME : InputMethodService() {
     private val mainHandler = Handler(Looper.getMainLooper())
     private val pattern = StringBuilder()
     private var lastChar = ""
+    private var autoSpace = true
     private var wpm: Double = 20.0
     private var mode: Int = KeyerMode.ULTIMATIC
     private var started = false
@@ -111,7 +112,7 @@ class MorseIME : InputMethodService() {
                         pattern.clear()
                     }
                     KeyerEvent.WORD_SPACE -> {
-                        if (lastChar != "\n") {
+                        if (autoSpace && lastChar != "\n") {
                             currentInputConnection?.commitText(" ", 1)
                         } else {
                             currentInputConnection?.finishComposingText()
@@ -152,6 +153,7 @@ class MorseIME : InputMethodService() {
 
         val speedValue = root.findViewById<TextView>(R.id.speed_value)
         val modeSpinner = root.findViewById<Spinner>(R.id.mode_spinner)
+        val autoSpaceSwitch = root.findViewById<android.widget.Switch>(R.id.auto_space_switch)
         val modeNames = arrayOf("Iambic A", "Iambic B", "Ultimatic", "Straight")
         val modeValues = arrayOf(KeyerMode.IAMBIC_A, KeyerMode.IAMBIC_B, KeyerMode.ULTIMATIC, KeyerMode.STRAIGHT)
         modeSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, modeNames).also {
@@ -161,6 +163,7 @@ class MorseIME : InputMethodService() {
         fun resetSettingsUI() {
             speedValue.text = wpm.toInt().toString()
             modeSpinner.setSelection(modeValues.indexOf(mode))
+            autoSpaceSwitch.isChecked = autoSpace
         }
 
         root.findViewById<View>(R.id.settings_cancel_btn).setOnClickListener {
@@ -194,11 +197,13 @@ class MorseIME : InputMethodService() {
         root.findViewById<View>(R.id.settings_apply_btn).setOnClickListener {
             val newWpm = speedValue.text.toString().toDoubleOrNull() ?: return@setOnClickListener
             val newMode = pendingMode
+            val newAutoSpace = autoSpaceSwitch.isChecked
             if (newWpm != wpm || newMode != mode) {
                 wpm = newWpm
                 mode = newMode
                 destroyAndRecreateKeyer()
             }
+            autoSpace = newAutoSpace
             keyboardArea.visibility = View.VISIBLE
             settingsArea.visibility = View.GONE
         }
