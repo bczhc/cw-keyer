@@ -5,7 +5,10 @@ import android.os.Handler
 import android.os.Looper
 import android.view.MotionEvent
 import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.Spinner
 import android.widget.TextView
 
 class MorseIME : InputMethodService() {
@@ -14,6 +17,9 @@ class MorseIME : InputMethodService() {
     private val mainHandler = Handler(Looper.getMainLooper())
     private val pattern = StringBuilder()
     private var lastChar = ""
+    private var wpm: Double = 20.0
+    private var mode: Int = KeyerMode.ULTIMATIC
+    private var started = false
 
     private val morseMap = mapOf(
         ".-" to "a",
@@ -76,7 +82,11 @@ class MorseIME : InputMethodService() {
 
     override fun onCreate() {
         super.onCreate()
-        keyerPtr = KeyerJNI.createKeyer(20.0, KeyerMode.ULTIMATIC)
+        createKeyer()
+    }
+
+    private fun createKeyer() {
+        keyerPtr = KeyerJNI.createKeyer(wpm, mode)
         KeyerJNI.setEventCallback(keyerPtr) { event ->
             mainHandler.post {
                 when (event) {
@@ -112,12 +122,87 @@ class MorseIME : InputMethodService() {
                 statusText?.text = pattern.toString()
             }
         }
+        if (started) {
+            KeyerJNI.startKeyer(keyerPtr)
+        }
+    }
+
+    private fun destroyKeyer() {
+        KeyerJNI.stopKeyer(keyerPtr)
+        KeyerJNI.destroyKeyer(keyerPtr)
+        keyerPtr = 0
+    }
+
+    private fun destroyAndRecreateKeyer() {
+        destroyKeyer()
+        createKeyer()
     }
 
     override fun onCreateInputView(): View {
         val root = layoutInflater.inflate(R.layout.ime_input, null) as View
 
+        val keyboardArea = root.findViewById<View>(R.id.keyboard_area)
+        val settingsArea = root.findViewById<View>(R.id.settings_area)
         statusText = root.findViewById(R.id.status_text)
+
+        root.findViewById<View>(R.id.settings_btn).setOnClickListener {
+            keyboardArea.visibility = View.GONE
+            settingsArea.visibility = View.VISIBLE
+        }
+
+        val speedValue = root.findViewById<TextView>(R.id.speed_value)
+        val modeSpinner = root.findViewById<Spinner>(R.id.mode_spinner)
+        val modeNames = arrayOf("Iambic A", "Iambic B", "Ultimatic", "Straight")
+        val modeValues = arrayOf(KeyerMode.IAMBIC_A, KeyerMode.IAMBIC_B, KeyerMode.ULTIMATIC, KeyerMode.STRAIGHT)
+        modeSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, modeNames).also {
+            it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        }
+
+        fun resetSettingsUI() {
+            speedValue.text = wpm.toInt().toString()
+            modeSpinner.setSelection(modeValues.indexOf(mode))
+        }
+
+        root.findViewById<View>(R.id.settings_cancel_btn).setOnClickListener {
+            resetSettingsUI()
+            keyboardArea.visibility = View.VISIBLE
+            settingsArea.visibility = View.GONE
+        }
+
+        root.findViewById<View>(R.id.speed_inc_btn).setOnClickListener {
+            val cur = speedValue.text.toString().toIntOrNull() ?: return@setOnClickListener
+            speedValue.text = (cur + 1).coerceAtMost(99).toString()
+        }
+        root.findViewById<View>(R.id.speed_dec_btn).setOnClickListener {
+            val cur = speedValue.text.toString().toIntOrNull() ?: return@setOnClickListener
+            speedValue.text = (cur - 1).coerceAtLeast(1).toString()
+        }
+
+        var pendingMode = mode
+        modeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(p: AdapterView<*>?, v: View?, pos: Int, id: Long) {
+                pendingMode = modeValues[pos]
+            }
+            override fun onNothingSelected(p: AdapterView<*>?) {}
+        }
+
+        root.findViewById<View>(R.id.switch_ime_btn).setOnClickListener {
+            (getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager)
+                .showInputMethodPicker()
+        }
+
+        root.findViewById<View>(R.id.settings_apply_btn).setOnClickListener {
+            val newWpm = speedValue.text.toString().toDoubleOrNull() ?: return@setOnClickListener
+            val newMode = pendingMode
+            if (newWpm != wpm || newMode != mode) {
+                wpm = newWpm
+                mode = newMode
+                destroyAndRecreateKeyer()
+            }
+            keyboardArea.visibility = View.VISIBLE
+            settingsArea.visibility = View.GONE
+        }
+
         val ditBtn = root.findViewById<Button>(R.id.dit_btn)
         val dahBtn = root.findViewById<Button>(R.id.dah_btn)
 
@@ -141,17 +226,18 @@ class MorseIME : InputMethodService() {
 
     override fun onStartInputView(info: android.view.inputmethod.EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
+        started = true
         KeyerJNI.startKeyer(keyerPtr)
     }
 
     override fun onFinishInputView(finishingInput: Boolean) {
         super.onFinishInputView(finishingInput)
+        started = false
         KeyerJNI.stopKeyer(keyerPtr)
     }
 
     override fun onDestroy() {
-        KeyerJNI.stopKeyer(keyerPtr)
-        KeyerJNI.destroyKeyer(keyerPtr)
+        destroyKeyer()
         super.onDestroy()
     }
 }
