@@ -1,6 +1,6 @@
 pub mod audio;
 
-use jni::objects::JClass;
+use jni::objects::{GlobalRef, JClass, JObject, JValue};
 use jni::sys::{jboolean, jdouble, jint, jlong};
 use jni::JNIEnv;
 use keyer_lib::{KeyEvent, Keyer, KeyerMode};
@@ -45,6 +45,7 @@ struct KeyerHandle {
     state: Arc<Mutex<KeyerState>>,
     running: Arc<AtomicBool>,
     handle: Option<thread::JoinHandle<()>>,
+    callback: Option<GlobalRef>,
 }
 
 impl Drop for KeyerHandle {
@@ -83,14 +84,27 @@ pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_createKeyer(
         state: Arc::new(Mutex::new(state)),
         running: Arc::new(AtomicBool::new(false)),
         handle: None,
+        callback: None,
     };
     Box::into_raw(Box::new(handle)) as jlong
 }
 
 #[allow(non_snake_case)]
 #[unsafe(no_mangle)]
+pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_setEventCallback(
+    mut env: JNIEnv,
+    _class: JClass,
+    ptr: jlong,
+    callback: JObject,
+) {
+    let handle = unsafe { &mut *(ptr as *mut KeyerHandle) };
+    handle.callback = Some(env.new_global_ref(callback).unwrap());
+}
+
+#[allow(non_snake_case)]
+#[unsafe(no_mangle)]
 pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_startKeyer(
-    _env: JNIEnv,
+    mut env: JNIEnv,
     _class: JClass,
     ptr: jlong,
 ) {
@@ -100,8 +114,11 @@ pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_startKeyer(
     }
     let state = handle.state.clone();
     let running = handle.running.clone();
+    let callback = handle.callback.as_ref().map(|cb| cb.clone());
+    let jvm = env.get_java_vm().unwrap();
     running.store(true, Ordering::Relaxed);
     handle.handle = Some(thread::spawn(move || {
+        let mut env = jvm.attach_current_thread().unwrap();
         while running.load(Ordering::Relaxed) {
             let now = mono_now();
             let events = {
@@ -119,6 +136,18 @@ pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_startKeyer(
                         guard.audio.stop_tone();
                     }
                     _ => {}
+                }
+                if let Some(ref cb) = callback {
+                    let event_int: i32 = match event {
+                        KeyEvent::KeyOn => 0,
+                        KeyEvent::KeyOff => 1,
+                        KeyEvent::Dit => 2,
+                        KeyEvent::Dah => 3,
+                        KeyEvent::CharSpace => 4,
+                        KeyEvent::WordSpace => 5,
+                    };
+                    let obj = (*cb).clone();
+                    let _ = env.call_method(obj, "onEvent", "(I)V", &[JValue::Int(event_int)]);
                 }
             }
             thread::sleep(Duration::from_millis(1));

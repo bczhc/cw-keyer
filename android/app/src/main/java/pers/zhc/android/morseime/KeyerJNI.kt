@@ -16,6 +16,10 @@ object KeyerEvent {
     const val WORD_SPACE = 5
 }
 
+fun interface KeyerEventCallback {
+    fun onEvent(event: Int)
+}
+
 object KeyerJNI {
     init {
         System.loadLibrary("app_jni")
@@ -31,4 +35,5 @@ object KeyerJNI {
     external fun setDit(ptr: Long, pressed: Boolean): Boolean
     external fun setDah(ptr: Long, pressed: Boolean): Boolean
     external fun isKeyOn(ptr: Long): Boolean
+    external fun setEventCallback(ptr: Long, callback: KeyerEventCallback)
 }

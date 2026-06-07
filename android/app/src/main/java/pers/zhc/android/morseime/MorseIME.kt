@@ -1,6 +1,8 @@
 package pers.zhc.android.morseime
 
 import android.inputmethodservice.InputMethodService
+import android.os.Handler
+import android.os.Looper
 import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
@@ -11,10 +13,23 @@ class MorseIME : InputMethodService() {
     private var statusText: TextView? = null
     private var ditDown = false
     private var dahDown = false
+    private val mainHandler = Handler(Looper.getMainLooper())
+
+    private val eventLabels = mapOf(
+        KeyerEvent.KEY_ON to "KEY ON",
+        KeyerEvent.KEY_OFF to "KEY OFF",
+        KeyerEvent.DIT to "dit",
+        KeyerEvent.DAH to "dah",
+        KeyerEvent.CHAR_SPACE to "char",
+        KeyerEvent.WORD_SPACE to "word",
+    )
 
     override fun onCreate() {
         super.onCreate()
         keyerPtr = KeyerJNI.createKeyer(20.0, KeyerMode.ULTIMATIC)
+        KeyerJNI.setEventCallback(keyerPtr) { event ->
+            mainHandler.post { statusText?.text = eventLabels[event] ?: "" }
+        }
     }
 
     override fun onCreateInputView(): View {
@@ -26,31 +41,15 @@ class MorseIME : InputMethodService() {
 
         ditBtn.setOnTouchListener { _, event ->
             when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    ditDown = true
-                    KeyerJNI.setDit(keyerPtr, true)
-                    updateStatus()
-                }
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    ditDown = false
-                    KeyerJNI.setDit(keyerPtr, false)
-                    updateStatus()
-                }
+                MotionEvent.ACTION_DOWN -> KeyerJNI.setDit(keyerPtr, true)
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> KeyerJNI.setDit(keyerPtr, false)
             }
             true
         }
         dahBtn.setOnTouchListener { _, event ->
             when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    dahDown = true
-                    KeyerJNI.setDah(keyerPtr, true)
-                    updateStatus()
-                }
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    dahDown = false
-                    KeyerJNI.setDah(keyerPtr, false)
-                    updateStatus()
-                }
+                MotionEvent.ACTION_DOWN -> KeyerJNI.setDah(keyerPtr, true)
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> KeyerJNI.setDah(keyerPtr, false)
             }
             true
         }
@@ -72,12 +71,5 @@ class MorseIME : InputMethodService() {
         KeyerJNI.stopKeyer(keyerPtr)
         KeyerJNI.destroyKeyer(keyerPtr)
         super.onDestroy()
-    }
-
-    private fun updateStatus() {
-        val parts = mutableListOf<String>()
-        if (ditDown) parts.add("DIT")
-        if (dahDown) parts.add("DAH")
-        statusText?.text = if (parts.isEmpty()) "" else parts.joinToString(" + ")
     }
 }
