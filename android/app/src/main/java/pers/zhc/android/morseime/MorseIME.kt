@@ -241,6 +241,11 @@ class MorseIME : InputMethodService() {
             true
         }
 
+        root.findViewById<View>(R.id.switch_ime_btn).setOnClickListener {
+            (getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager)
+                .showInputMethodPicker()
+        }
+
         fun resetSettingsUI() {
             speedValue.text = wpm.toInt().toString()
             pitchValue.text = pitch.toInt().toString()
