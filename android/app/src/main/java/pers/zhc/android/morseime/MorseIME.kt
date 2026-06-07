@@ -5,9 +5,11 @@ import android.os.Handler
 import android.os.Looper
 import android.view.MotionEvent
 import android.view.View
+import android.view.LayoutInflater
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.TextView
+import androidx.appcompat.view.ContextThemeWrapper
 import pers.zhc.android.morseime.databinding.ImeInputBinding
 
 class MorseIME : InputMethodService() {
@@ -175,7 +177,8 @@ class MorseIME : InputMethodService() {
     }
 
     override fun onCreateInputView(): View {
-        _binding = ImeInputBinding.inflate(layoutInflater)
+        val themedInflater = layoutInflater.cloneInContext(ContextThemeWrapper(this, R.style.Theme_MorseIME))
+        _binding = ImeInputBinding.inflate(themedInflater)
         val root = binding.root
         statusText = binding.statusText
 

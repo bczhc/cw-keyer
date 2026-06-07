@@ -30,7 +30,7 @@
             android:textSize="18sp"
             android:textColor="@color/ime_candidate_text"
             android:gravity="start"
-            android:layout_gravity="start"
+            android:layout_gravity="start|center_vertical"
             android:paddingStart="16dp"
             android:visibility="gone" />
 
@@ -99,6 +99,7 @@
         android:orientation="vertical"
         android:padding="16dp"
         android:paddingBottom="24dp"
+        android:theme="@style/Theme.MorseIME"
         android:visibility="gone">
 
         <TextView
