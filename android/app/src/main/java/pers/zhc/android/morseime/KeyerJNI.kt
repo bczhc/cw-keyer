@@ -19,7 +19,10 @@ object KeyerEvent {
 object KeyerJNI {
     init {
         System.loadLibrary("app_jni")
+        initLogger()
     }
+
+    external fun initLogger()
 
     external fun createKeyer(wpm: Double, mode: Int): Long
     external fun destroyKeyer(ptr: Long)
@@ -27,4 +30,9 @@ object KeyerJNI {
     external fun setDah(ptr: Long, pressed: Boolean, now: Double): Boolean
     external fun isKeyDown(ptr: Long): Boolean
     external fun tick(ptr: Long, now: Double): IntArray
+
+    external fun initAudio(): Long
+    external fun startTone(ptr: Long)
+    external fun stopTone(ptr: Long)
+    external fun destroyAudio(ptr: Long)
 }

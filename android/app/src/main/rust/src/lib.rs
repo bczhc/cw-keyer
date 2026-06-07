@@ -1,8 +1,21 @@
-use jni::JNIEnv;
-use jni::objects::{JClass, JIntArray};
-use jni::sys::{jboolean, jdouble, jint, jlong, jstring};
+pub mod audio;
 
+use jni::objects::{JClass, JIntArray};
+use jni::sys::{jboolean, jdouble, jint, jlong};
+use jni::JNIEnv;
 use keyer_lib::{Keyer, KeyerMode};
+use log::debug;
+
+fn set_up_logger() {
+    use android_logger::Config;
+    use log::LevelFilter;
+
+    android_logger::init_once(
+        Config::default()
+            .with_max_level(LevelFilter::Debug)
+            .with_tag("Morse IME"),
+    );
+}
 
 struct KeyerState {
     keyer: Keyer,
@@ -27,6 +40,16 @@ fn event_to_int(event: keyer_lib::KeyEvent) -> i32 {
         keyer_lib::KeyEvent::CharSpace => 4,
         keyer_lib::KeyEvent::WordSpace => 5,
     }
+}
+
+/// It's safe to call this multiple times.
+#[allow(non_snake_case)]
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_initLogger(
+    _env: JNIEnv,
+    _class: JClass,
+) {
+    set_up_logger();
 }
 
 #[allow(non_snake_case)]
@@ -123,12 +146,46 @@ pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_tick<'local>(
 
 #[allow(non_snake_case)]
 #[unsafe(no_mangle)]
-pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_helloFromRust(
-    env: JNIEnv,
+pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_initAudio(
+    _env: JNIEnv,
     _class: JClass,
-) -> jstring {
-    let output = env
-        .new_string("Hello from Rust!")
-        .expect("Failed to create Java string");
-    output.into_raw()
+) -> jlong {
+    let player = audio::AudioPlayer::new();
+    Box::into_raw(Box::new(player)) as jlong
+}
+
+#[allow(non_snake_case)]
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_startTone(
+    _env: JNIEnv,
+    _class: JClass,
+    ptr: jlong,
+) {
+    let player = unsafe { &*(ptr as *const audio::AudioPlayer) };
+    player.start_tone();
+}
+
+#[allow(non_snake_case)]
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_stopTone(
+    _env: JNIEnv,
+    _class: JClass,
+    ptr: jlong,
+) {
+    let player = unsafe { &*(ptr as *const audio::AudioPlayer) };
+    player.stop_tone();
+}
+
+#[allow(non_snake_case)]
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_destroyAudio(
+    _env: JNIEnv,
+    _class: JClass,
+    ptr: jlong,
+) {
+    if ptr != 0 {
+        unsafe {
+            drop(Box::from_raw(ptr as *mut audio::AudioPlayer));
+        }
+    }
 }
