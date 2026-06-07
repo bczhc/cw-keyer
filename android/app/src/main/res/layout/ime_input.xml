@@ -47,7 +47,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:layout_marginEnd="4dp"
-            android:background="@drawable/dit_btn_bg" />
+            android:background="@drawable/selector_dit_btn" />
 
         <Button
             android:id="@+id/dah_btn"
@@ -55,13 +55,13 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:layout_marginStart="4dp"
-            android:background="@drawable/dah_btn_bg" />
+            android:background="@drawable/selector_dah_btn" />
 
         <Button
             android:id="@+id/key_btn"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:backgroundTint="@color/ime_button_bg"
+            android:background="@drawable/selector_key_btn"
             android:textColor="@color/ime_button_text"
             android:text="@string/key"
             android:textSize="28sp"

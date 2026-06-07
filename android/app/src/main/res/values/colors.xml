@@ -5,6 +5,7 @@
     <color name="ime_keyboard_bg">#FFECEFF1</color>
     <color name="ime_candidate_bg">#FFFFFFFF</color>
     <color name="ime_button_bg">#FF1976D2</color>
+    <color name="ime_button_bg_pressed">#FF4A96DC</color>
     <color name="ime_button_text">#FFFFFFFF</color>
     <color name="ime_candidate_text">#FF212121</color>
 </resources>

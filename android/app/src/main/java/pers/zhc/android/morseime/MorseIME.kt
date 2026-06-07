@@ -222,30 +222,42 @@ class MorseIME : InputMethodService() {
         ditBtn.setOnTouchListener { v, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
+                    v.isPressed = true
                     if (vibrationEnabled) v.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
                     KeyerJNI.setDit(keyerPtr, true)
                 }
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> KeyerJNI.setDit(keyerPtr, false)
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    v.isPressed = false
+                    KeyerJNI.setDit(keyerPtr, false)
+                }
             }
             true
         }
         dahBtn.setOnTouchListener { v, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
+                    v.isPressed = true
                     if (vibrationEnabled) v.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
                     KeyerJNI.setDah(keyerPtr, true)
                 }
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> KeyerJNI.setDah(keyerPtr, false)
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    v.isPressed = false
+                    KeyerJNI.setDah(keyerPtr, false)
+                }
             }
             true
         }
         keyBtn.setOnTouchListener { v, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
+                    v.isPressed = true
                     if (vibrationEnabled) v.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
                     KeyerJNI.setDit(keyerPtr, true)
                 }
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> KeyerJNI.setDit(keyerPtr, false)
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    v.isPressed = false
+                    KeyerJNI.setDit(keyerPtr, false)
+                }
             }
             true
         }
