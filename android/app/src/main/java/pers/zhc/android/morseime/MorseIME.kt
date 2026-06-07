@@ -27,6 +27,10 @@ class MorseIME : InputMethodService() {
     private var pitch: Double = 700.0
     private var started = false
 
+    companion object {
+        private const val BACKSPACE = "\u0000"
+    }
+
     private val morseMap = mapOf(
         ".-" to "a",
         "-..." to "b",
@@ -84,6 +88,12 @@ class MorseIME : InputMethodService() {
         ".--.-." to "@",
         "..--" to " ",
         "-...-" to "\n",
+        "......." to BACKSPACE,
+        "........" to BACKSPACE,
+        "........." to BACKSPACE,
+        ".........." to BACKSPACE,
+        "..........." to BACKSPACE,
+        "............" to BACKSPACE,
     )
 
     override fun onCreate() {
@@ -107,19 +117,29 @@ class MorseIME : InputMethodService() {
                 when (event) {
                     KeyerEvent.DIT -> {
                         pattern.append(".")
-                        val decoded = morseMap[pattern.toString()] ?: "\uFFFD"
-                        if (showComposing) currentInputConnection?.setComposingText(decoded, 1)
+                        val decoded = morseMap[pattern.toString()]
+                        if (showComposing) {
+                            val text = if (decoded == BACKSPACE) "" else (decoded ?: "\uFFFD")
+                            currentInputConnection?.setComposingText(text, 1)
+                        }
                     }
                     KeyerEvent.DAH -> {
                         pattern.append("-")
-                        val decoded = morseMap[pattern.toString()] ?: "\uFFFD"
-                        if (showComposing) currentInputConnection?.setComposingText(decoded, 1)
+                        val decoded = morseMap[pattern.toString()]
+                        if (showComposing) {
+                            val text = if (decoded == BACKSPACE) "" else (decoded ?: "\uFFFD")
+                            currentInputConnection?.setComposingText(text, 1)
+                        }
                     }
                     KeyerEvent.CHAR_SPACE -> {
                         val ch = morseMap[pattern.toString()]
                         if (ch != null) {
-                            currentInputConnection?.commitText(ch, 1)
-                            lastChar = ch
+                            if (ch == BACKSPACE) {
+                                currentInputConnection?.commitText("", 1)
+                            } else {
+                                currentInputConnection?.commitText(ch, 1)
+                                lastChar = ch
+                            }
                         } else {
                             currentInputConnection?.finishComposingText()
                         }
