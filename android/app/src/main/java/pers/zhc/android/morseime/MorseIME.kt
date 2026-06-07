@@ -160,15 +160,6 @@ class MorseIME : InputMethodService() {
         statusText = root.findViewById(R.id.status_text)
         val modeLabel = root.findViewById<TextView>(R.id.mode_label)
 
-        root.findViewById<View>(R.id.settings_btn).setOnClickListener {
-            keyboardArea.visibility = View.GONE
-            modeLabel.visibility = View.GONE
-            settingsArea.visibility = View.VISIBLE
-            statusText?.text = getString(R.string.settings_title)
-            statusText?.gravity = android.view.Gravity.START
-            statusText?.setPaddingRelative((16 * resources.displayMetrics.density).toInt(), 0, 0, 0)
-        }
-
         val speedValue = root.findViewById<TextView>(R.id.speed_value)
         val pitchValue = root.findViewById<TextView>(R.id.pitch_value)
         val modeSpinner = root.findViewById<Spinner>(R.id.mode_spinner)
@@ -274,6 +265,16 @@ class MorseIME : InputMethodService() {
             autoSpaceSwitch.isChecked = autoSpace
             soundSwitch.isChecked = soundEnabled
             vibrationSwitch.isChecked = vibrationEnabled
+        }
+
+        root.findViewById<View>(R.id.settings_btn).setOnClickListener {
+            keyboardArea.visibility = View.GONE
+            modeLabel.visibility = View.GONE
+            settingsArea.visibility = View.VISIBLE
+            statusText?.text = getString(R.string.settings_title)
+            statusText?.gravity = android.view.Gravity.START
+            statusText?.setPaddingRelative((16 * resources.displayMetrics.density).toInt(), 0, 0, 0)
+            resetSettingsUI()
         }
 
         root.findViewById<View>(R.id.settings_cancel_btn).setOnClickListener {
