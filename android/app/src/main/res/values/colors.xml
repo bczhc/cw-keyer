@@ -2,4 +2,9 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="ime_keyboard_bg">#FFECEFF1</color>
+    <color name="ime_candidate_bg">#FFFFFFFF</color>
+    <color name="ime_button_bg">#FF1976D2</color>
+    <color name="ime_button_text">#FFFFFFFF</color>
+    <color name="ime_candidate_text">#FF212121</color>
 </resources>
