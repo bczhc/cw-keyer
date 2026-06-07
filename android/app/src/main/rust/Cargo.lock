@@ -7,6 +7,7 @@ name = "app_jni"
 version = "0.1.0"
 dependencies = [
  "jni",
+ "keyer-lib",
 ]
 
 [[package]]
@@ -80,6 +81,10 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "keyer-lib"
+version = "0.1.0"
 
 [[package]]
 name = "log"

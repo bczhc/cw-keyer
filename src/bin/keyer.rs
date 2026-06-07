@@ -27,7 +27,7 @@ use std::time::Instant;
 use std::thread;
 
 use clap::Parser;
-use cw_keyer::{KeyEvent, Keyer, KeyerMode};
+use keyer_lib::{KeyEvent, Keyer, KeyerMode};
 
 // ── CLI ────────────────────────────────────────────────────────────
 
