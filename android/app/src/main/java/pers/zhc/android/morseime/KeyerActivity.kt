@@ -84,7 +84,7 @@ class KeyerActivity : AppCompatActivity() {
     }
 
     private fun createAndStartKeyer() {
-        keyerPtr = KeyerJNI.createKeyer(wpm, mode)
+        keyerPtr = KeyerJNI.createKeyer(wpm, mode, 700.0)
         KeyerJNI.startKeyer(keyerPtr)
     }
 

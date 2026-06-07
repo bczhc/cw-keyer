@@ -64,14 +64,14 @@ pub struct AudioPlayer {
 }
 
 impl AudioPlayer {
-    pub fn new() -> Self {
+    pub fn new(frequency: f32) -> Self {
         let playing = Arc::new(AtomicBool::new(false));
         let running = Arc::new(AtomicBool::new(true));
         let playing_clone = playing.clone();
         let running_clone = running.clone();
 
         let handle = thread::spawn(move || {
-            let wave = SineWave::new(440.0, 0.5, playing_clone);
+            let wave = SineWave::new(frequency, 0.5, playing_clone);
             let mut stream = AudioStreamBuilder::default()
                 .set_performance_mode(PerformanceMode::LowLatency)
                 .set_sharing_mode(SharingMode::Shared)

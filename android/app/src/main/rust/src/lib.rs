@@ -74,11 +74,12 @@ pub extern "system" fn Java_pers_zhc_android_morseime_KeyerJNI_createKeyer(
     _class: JClass,
     wpm: jdouble,
     mode: jint,
+    pitch: jdouble,
 ) -> jlong {
     let keyer = Keyer::new(wpm as f64, mode_from_int(mode));
     let state = KeyerState {
         keyer,
-        audio: audio::AudioPlayer::new(),
+        audio: audio::AudioPlayer::new(pitch as f32),
     };
     let handle = KeyerHandle {
         state: Arc::new(Mutex::new(state)),

@@ -28,7 +28,7 @@ object KeyerJNI {
 
     external fun initLogger()
 
-    external fun createKeyer(wpm: Double, mode: Int): Long
+    external fun createKeyer(wpm: Double, mode: Int, pitch: Double): Long
     external fun destroyKeyer(ptr: Long)
     external fun startKeyer(ptr: Long)
     external fun stopKeyer(ptr: Long)

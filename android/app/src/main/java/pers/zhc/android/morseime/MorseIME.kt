@@ -21,6 +21,7 @@ class MorseIME : InputMethodService() {
     private var autoSpace = true
     private var wpm: Double = 20.0
     private var mode: Int = KeyerMode.ULTIMATIC
+    private var pitch: Double = 700.0
     private var started = false
 
     private val morseMap = mapOf(
@@ -88,7 +89,7 @@ class MorseIME : InputMethodService() {
     }
 
     private fun createKeyer() {
-        keyerPtr = KeyerJNI.createKeyer(wpm, mode)
+        keyerPtr = KeyerJNI.createKeyer(wpm, mode, pitch)
         KeyerJNI.setEventCallback(keyerPtr) { event ->
             mainHandler.post {
                 when (event) {
@@ -158,6 +159,7 @@ class MorseIME : InputMethodService() {
         }
 
         val speedValue = root.findViewById<TextView>(R.id.speed_value)
+        val pitchValue = root.findViewById<TextView>(R.id.pitch_value)
         val modeSpinner = root.findViewById<Spinner>(R.id.mode_spinner)
         val autoSpaceSwitch = root.findViewById<android.widget.Switch>(R.id.auto_space_switch)
         val modeNames = arrayOf("Iambic A", "Iambic B", "Ultimatic", "Straight")
@@ -172,6 +174,24 @@ class MorseIME : InputMethodService() {
                 pendingMode = modeValues[pos]
             }
             override fun onNothingSelected(p: AdapterView<*>?) {}
+        }
+
+        root.findViewById<View>(R.id.speed_inc_btn).setOnClickListener {
+            val cur = speedValue.text.toString().toIntOrNull() ?: return@setOnClickListener
+            speedValue.text = (cur + 1).coerceAtMost(99).toString()
+        }
+        root.findViewById<View>(R.id.speed_dec_btn).setOnClickListener {
+            val cur = speedValue.text.toString().toIntOrNull() ?: return@setOnClickListener
+            speedValue.text = (cur - 1).coerceAtLeast(1).toString()
+        }
+
+        root.findViewById<View>(R.id.pitch_inc_btn).setOnClickListener {
+            val cur = pitchValue.text.toString().toIntOrNull() ?: return@setOnClickListener
+            pitchValue.text = (cur + 50).coerceAtMost(2000).toString()
+        }
+        root.findViewById<View>(R.id.pitch_dec_btn).setOnClickListener {
+            val cur = pitchValue.text.toString().toIntOrNull() ?: return@setOnClickListener
+            pitchValue.text = (cur - 50).coerceAtLeast(100).toString()
         }
 
         val ditBtn = root.findViewById<Button>(R.id.dit_btn)
@@ -210,6 +230,7 @@ class MorseIME : InputMethodService() {
 
         fun resetSettingsUI() {
             speedValue.text = wpm.toInt().toString()
+            pitchValue.text = pitch.toInt().toString()
             modeSpinner.setSelection(modeValues.indexOf(mode))
             autoSpaceSwitch.isChecked = autoSpace
         }
@@ -226,12 +247,14 @@ class MorseIME : InputMethodService() {
 
         root.findViewById<View>(R.id.settings_apply_btn).setOnClickListener {
             val newWpm = speedValue.text.toString().toDoubleOrNull() ?: return@setOnClickListener
+            val newPitch = pitchValue.text.toString().toDoubleOrNull() ?: return@setOnClickListener
             val newMode = pendingMode
             val newAutoSpace = autoSpaceSwitch.isChecked
             var changed = false
-            if (newWpm != wpm || newMode != mode) {
+            if (newWpm != wpm || newMode != mode || newPitch != pitch) {
                 wpm = newWpm
                 mode = newMode
+                pitch = newPitch
                 destroyAndRecreateKeyer()
                 updateKeyboardMode()
                 changed = true
