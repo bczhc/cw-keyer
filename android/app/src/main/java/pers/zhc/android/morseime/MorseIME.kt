@@ -153,7 +153,7 @@ class MorseIME : InputMethodService() {
             keyboardArea.visibility = View.GONE
             modeLabel.visibility = View.GONE
             settingsArea.visibility = View.VISIBLE
-            statusText?.text = "Settings"
+            statusText?.text = getString(R.string.settings_title)
             statusText?.gravity = android.view.Gravity.START
             statusText?.setPaddingRelative((16 * resources.displayMetrics.density).toInt(), 0, 0, 0)
         }
