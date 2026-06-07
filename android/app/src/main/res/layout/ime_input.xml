@@ -10,7 +10,7 @@
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="8dp">
+        android:paddingVertical="2dp">
 
         <TextView
             android:id="@+id/status_text"
@@ -23,10 +23,10 @@
 
         <Button
             android:id="@+id/settings_btn"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:text="⚙"
-            android:textSize="22sp"
+            android:textSize="20sp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:textColor="?android:attr/textColorSecondary"
             android:layout_gravity="end" />
@@ -63,7 +63,28 @@
             android:text="DAH"
             android:textSize="28sp"
             android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/key_btn"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:backgroundTint="@color/ime_button_bg"
+            android:textColor="@color/ime_button_text"
+            android:text="KEY"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/mode_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="28sp"
+        android:textColor="@color/ime_candidate_text"
+        android:gravity="center"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp" />
 
     <LinearLayout
         android:id="@+id/settings_area"
@@ -72,12 +93,13 @@
         android:layout_weight="1"
         android:orientation="vertical"
         android:padding="16dp"
+        android:paddingBottom="24dp"
         android:visibility="gone">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Speed"
+            android:text="WPM"
             android:textSize="15sp" />
 
         <LinearLayout

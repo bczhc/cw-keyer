@@ -8,6 +8,7 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
 
@@ -145,10 +146,15 @@ class MorseIME : InputMethodService() {
         val keyboardArea = root.findViewById<View>(R.id.keyboard_area)
         val settingsArea = root.findViewById<View>(R.id.settings_area)
         statusText = root.findViewById(R.id.status_text)
+        val modeLabel = root.findViewById<TextView>(R.id.mode_label)
 
         root.findViewById<View>(R.id.settings_btn).setOnClickListener {
             keyboardArea.visibility = View.GONE
+            modeLabel.visibility = View.GONE
             settingsArea.visibility = View.VISIBLE
+            statusText?.text = "Settings"
+            statusText?.gravity = android.view.Gravity.START
+            statusText?.setPaddingRelative((16 * resources.displayMetrics.density).toInt(), 0, 0, 0)
         }
 
         val speedValue = root.findViewById<TextView>(R.id.speed_value)
@@ -160,27 +166,6 @@ class MorseIME : InputMethodService() {
             it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         }
 
-        fun resetSettingsUI() {
-            speedValue.text = wpm.toInt().toString()
-            modeSpinner.setSelection(modeValues.indexOf(mode))
-            autoSpaceSwitch.isChecked = autoSpace
-        }
-
-        root.findViewById<View>(R.id.settings_cancel_btn).setOnClickListener {
-            resetSettingsUI()
-            keyboardArea.visibility = View.VISIBLE
-            settingsArea.visibility = View.GONE
-        }
-
-        root.findViewById<View>(R.id.speed_inc_btn).setOnClickListener {
-            val cur = speedValue.text.toString().toIntOrNull() ?: return@setOnClickListener
-            speedValue.text = (cur + 1).coerceAtMost(99).toString()
-        }
-        root.findViewById<View>(R.id.speed_dec_btn).setOnClickListener {
-            val cur = speedValue.text.toString().toIntOrNull() ?: return@setOnClickListener
-            speedValue.text = (cur - 1).coerceAtLeast(1).toString()
-        }
-
         var pendingMode = mode
         modeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(p: AdapterView<*>?, v: View?, pos: Int, id: Long) {
@@ -189,27 +174,17 @@ class MorseIME : InputMethodService() {
             override fun onNothingSelected(p: AdapterView<*>?) {}
         }
 
-        root.findViewById<View>(R.id.switch_ime_btn).setOnClickListener {
-            (getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager)
-                .showInputMethodPicker()
-        }
-
-        root.findViewById<View>(R.id.settings_apply_btn).setOnClickListener {
-            val newWpm = speedValue.text.toString().toDoubleOrNull() ?: return@setOnClickListener
-            val newMode = pendingMode
-            val newAutoSpace = autoSpaceSwitch.isChecked
-            if (newWpm != wpm || newMode != mode) {
-                wpm = newWpm
-                mode = newMode
-                destroyAndRecreateKeyer()
-            }
-            autoSpace = newAutoSpace
-            keyboardArea.visibility = View.VISIBLE
-            settingsArea.visibility = View.GONE
-        }
-
         val ditBtn = root.findViewById<Button>(R.id.dit_btn)
         val dahBtn = root.findViewById<Button>(R.id.dah_btn)
+        val keyBtn = root.findViewById<Button>(R.id.key_btn)
+
+        fun updateKeyboardMode() {
+            val isStraight = mode == KeyerMode.STRAIGHT
+            ditBtn.visibility = if (isStraight) View.GONE else View.VISIBLE
+            dahBtn.visibility = if (isStraight) View.GONE else View.VISIBLE
+            keyBtn.visibility = if (isStraight) View.VISIBLE else View.GONE
+        }
+        updateKeyboardMode()
 
         ditBtn.setOnTouchListener { _, event ->
             when (event.action) {
@@ -224,6 +199,53 @@ class MorseIME : InputMethodService() {
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> KeyerJNI.setDah(keyerPtr, false)
             }
             true
+        }
+        keyBtn.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> KeyerJNI.setDit(keyerPtr, true)
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> KeyerJNI.setDit(keyerPtr, false)
+            }
+            true
+        }
+
+        fun resetSettingsUI() {
+            speedValue.text = wpm.toInt().toString()
+            modeSpinner.setSelection(modeValues.indexOf(mode))
+            autoSpaceSwitch.isChecked = autoSpace
+        }
+
+        root.findViewById<View>(R.id.settings_cancel_btn).setOnClickListener {
+            resetSettingsUI()
+            keyboardArea.visibility = View.VISIBLE
+            modeLabel.visibility = View.VISIBLE
+            settingsArea.visibility = View.GONE
+            statusText?.text = pattern.toString()
+            statusText?.gravity = android.view.Gravity.CENTER
+            statusText?.setPaddingRelative(0, 0, 0, 0)
+        }
+
+        root.findViewById<View>(R.id.settings_apply_btn).setOnClickListener {
+            val newWpm = speedValue.text.toString().toDoubleOrNull() ?: return@setOnClickListener
+            val newMode = pendingMode
+            val newAutoSpace = autoSpaceSwitch.isChecked
+            var changed = false
+            if (newWpm != wpm || newMode != mode) {
+                wpm = newWpm
+                mode = newMode
+                destroyAndRecreateKeyer()
+                updateKeyboardMode()
+                changed = true
+            }
+            if (newAutoSpace != autoSpace) {
+                autoSpace = newAutoSpace
+                changed = true
+            }
+            keyboardArea.visibility = View.VISIBLE
+            modeLabel.visibility = View.VISIBLE
+            settingsArea.visibility = View.GONE
+            statusText?.text = pattern.toString()
+            statusText?.gravity = android.view.Gravity.CENTER
+            statusText?.setPaddingRelative(0, 0, 0, 0)
         }
 
         return root
