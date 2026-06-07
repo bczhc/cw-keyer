@@ -16,4 +16,10 @@
     <string name="sound">声音</string>
     <string name="vibration">振动</string>
     <string name="show_composing">显示预编辑</string>
+    <string name="action_help">帮助</string>
+    <string name="help_title">莫尔斯码表</string>
+    <string name="label_space">空格</string>
+    <string name="label_newline">换行</string>
+    <string name="label_null_char">空字符</string>
+    <string name="null_char_desc">空字符：7-12 个点</string>
 </resources>

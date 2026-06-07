@@ -6,6 +6,7 @@ import android.provider.Settings
 import android.view.Menu
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
@@ -44,11 +45,59 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
         return when (item.itemId) {
-            R.id.action_keyer -> {
-                startActivity(Intent(this, KeyerActivity::class.java))
+            R.id.action_help -> {
+                showHelpDialog()
                 true
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun showHelpDialog() {
+        val letters = listOf(
+            "A .-", "B -...", "C -.-.", "D -..", "E .", "F ..-.", "G --.", "H ....",
+            "I ..", "J .---", "K -.-", "L .-..", "M --", "N -.", "O ---", "P .--.",
+            "Q --.-", "R .-.", "S ...", "T -", "U ..-", "V ...-", "W .--",
+            "X -..-", "Y -.--", "Z --..",
+        )
+        val digits = listOf(
+            "1 .----", "2 ..---", "3 ...--", "4 ....-", "5 .....", "6 -....",
+            "7 --...", "8 ---..", "9 ----.", "0 -----",
+        )
+        val punct = listOf(
+            ". .-.-.-", ", --..--", "? ..--..", "' .----.", "! -.-.--",
+            "/ -..-.", "( -.--.", ") -.--.-", "& .-...", ": ---...",
+            "; -.-.-.", "= -...-", "+ .-.-.", "- -....-", "_ ..--.-",
+            "\" .-..-.", "$ ...-..-", "@ .--.-.",
+        )
+
+        val sb = StringBuilder()
+
+        // letters + digits, 3 columns
+        val rows = maxOf(letters.size, digits.size)
+        for (i in 0 until rows) {
+            val l = if (i < letters.size) letters[i] else ""
+            val d = if (i < digits.size) digits[i] else ""
+            sb.append(l.padEnd(20))
+            sb.append(d)
+            if (i < rows - 1) sb.append("\n")
+        }
+
+        sb.append("\n\n")
+
+        // punctuation
+        sb.append(punct.joinToString("     ") + "\n")
+
+        // space, newline
+        sb.append(getString(R.string.label_space) + "  ..--" + "     ")
+        sb.append(getString(R.string.label_newline) + "  -...-" + "\n")
+
+        sb.append("\n" + getString(R.string.null_char_desc))
+
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.help_title))
+            .setMessage(sb.toString())
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
     }
 }

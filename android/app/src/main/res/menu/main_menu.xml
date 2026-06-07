@@ -2,7 +2,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/action_keyer"
-        android:title="@string/action_keyer"
+        android:id="@+id/action_help"
+        android:title="@string/action_help"
         app:showAsAction="never" />
 </menu>

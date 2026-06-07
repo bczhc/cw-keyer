@@ -16,4 +16,10 @@
     <string name="sound">Sound</string>
     <string name="vibration">Vibration</string>
     <string name="show_composing">Show composing</string>
+    <string name="action_help">Help</string>
+    <string name="help_title">Morse Code Table</string>
+    <string name="label_space">Space</string>
+    <string name="label_newline">Newline</string>
+    <string name="label_null_char">Null char</string>
+    <string name="null_char_desc">Null char: 7-12 dots</string>
 </resources>
