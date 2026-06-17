@@ -28,14 +28,21 @@ import datetime
 
 ser = serial.Serial(PORT, BAUD, timeout=0.001)
 pending = {}
-log = open('keyer.log', 'w')
+raw_log = open('interface-raw.log', 'w')
+out_log = open('interface-out.log', 'w')
+
+def output(msg):
+    print(msg, flush=True)
+    ts = datetime.datetime.now().strftime('%H:%M:%S.%f')
+    out_log.write(f'{ts}  {msg}\n')
+    out_log.flush()
 
 def flush_pending(now):
     expired = [ch for ch, p in pending.items() if now - p['time'] >= 0.001]
     for ch in expired:
         msg = MAP.get(pending[ch]['code'])
         if msg:
-            print(msg, flush=True)
+            output(msg)
         del pending[ch]
 
 try:
@@ -49,8 +56,8 @@ try:
 
         code = b[0]
         ts = datetime.datetime.now().strftime('%H:%M:%S.%f')
-        log.write(f'{ts}  0x{code:02x}  {MAP.get(code, "?")}\n')
-        log.flush()
+        raw_log.write(f'{ts}  0x{code:02x}  {MAP.get(code, "?")}\n')
+        raw_log.flush()
 
         ch = CHANNELS.get(code)
         if ch is None:
@@ -65,11 +72,12 @@ try:
             else:
                 msg = MAP.get(p['code'])
                 if msg:
-                    print(msg, flush=True)
+                    output(msg)
                 pending[ch] = {'code': code, 'time': now}
 
 except KeyboardInterrupt:
     pass
 finally:
-    log.close()
+    raw_log.close()
+    out_log.close()
     ser.close()

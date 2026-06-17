@@ -1,0 +1,3 @@
+#!/bin/bash
+
+while read -r x; do [ "$x" = "key on" ] && echo 'setblock -184 65 -109 redstone_block' > /tmp/mc-cmd; [ "$x" = "key off" ] && echo 'setblock -184 65 -109 air' > /tmp/mc-cmd; done
